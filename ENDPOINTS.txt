@@ -1,0 +1,993 @@
+ENDPOINTS DE LA API - SGB (SISTEMA DE GESTION PARA BARBERIA)
+Evidencia: GA7-220501096-AA5-EV04 - API del proyecto
+Aprendiz: Andrés Cárdenas - Ficha 3186668
+Repositorio: https://github.com/AndresCardenas10/ANDRESCARDENAS_AA5_EV04
+
+URL base: http://localhost:3000
+Documentacion interactiva (Swagger): http://localhost:3000/api-docs
+Formato: JSON (encabezado Content-Type: application/json).
+Autenticacion: los servicios con sesion requieren el encabezado
+  Authorization: Bearer <token>   (el token se obtiene con POST /api/auth/login)
+Respuesta general: { "exito": true|false, "mensaje": "...", "datos": ... }
+Errores de validacion: { "exito": false, "mensaje": "...", "errores": [ { "campo", "mensaje" } ] }
+Cuentas de prueba (datos-demo.sql): admin@demo.com, barbero@demo.com, cliente@demo.com - clave Demo1234
+
+==============================================================================
+RESUMEN (46 endpoints)
+==============================================================================
+
+[Salud]
+ 1. GET    /api/salud                           Estado de la API y la base de datos
+
+[Autenticación]
+ 2. POST   /api/auth/registro                   Registrar una cuenta de cliente
+ 3. POST   /api/auth/login                      Iniciar sesión (obtener token JWT)
+ 4. POST   /api/auth/recuperar                  Solicitar código de recuperación
+ 5. POST   /api/auth/restablecer                Restablecer contraseña con el código
+ 6. GET    /api/auth/perfil                     Ver mi perfil
+ 7. PUT    /api/auth/perfil                     Editar mi perfil
+ 8. PUT    /api/auth/contrasena                 Cambiar mi contraseña
+
+[Usuarios]
+ 9. GET    /api/usuarios/barberos               Listar barberos activos
+10. GET    /api/usuarios                        Listar usuarios
+11. GET    /api/usuarios/{id}                   Consultar un usuario
+12. POST   /api/usuarios                        Crear usuario
+13. PUT    /api/usuarios/{id}                   Actualizar usuario
+14. PATCH  /api/usuarios/{id}/estado            Activar o desactivar usuario
+
+[Servicios]
+15. GET    /api/servicios                       Listar servicios
+16. GET    /api/servicios/{id}                  Consultar un servicio
+17. POST   /api/servicios                       Crear servicio
+18. PUT    /api/servicios/{id}                  Actualizar servicio
+19. PATCH  /api/servicios/{id}/estado           Activar o desactivar servicio
+
+[Horarios]
+20. GET    /api/horarios/barbero/{idBarbero}    Ver horario semanal de un barbero
+21. PUT    /api/horarios/barbero/{idBarbero}    Definir horario semanal
+
+[Citas]
+22. GET    /api/citas/disponibilidad            Consultar horas disponibles
+23. POST   /api/citas                           Agendar cita
+24. GET    /api/citas                           Listar citas
+25. GET    /api/citas/{id}                      Consultar una cita
+26. PUT    /api/citas/{id}                      Reprogramar cita
+27. PATCH  /api/citas/{id}/estado               Confirmar, completar o cancelar cita
+
+[Pagos]
+28. POST   /api/pagos                           Registrar pago de una cita
+29. GET    /api/pagos                           Listar pagos
+30. GET    /api/pagos/{id}                      Consultar un pago
+31. GET    /api/pagos/{id}/comprobante          Descargar comprobante
+32. PATCH  /api/pagos/{id}/estado               Verificar o rechazar pago
+
+[Inventario]
+33. GET    /api/productos                       Listar productos
+34. POST   /api/productos                       Crear producto
+35. GET    /api/productos/{id}                  Consultar producto
+36. PUT    /api/productos/{id}                  Actualizar producto
+37. PATCH  /api/productos/{id}/estado           Activar o desactivar producto
+38. POST   /api/productos/{id}/movimientos      Registrar entrada o salida
+39. GET    /api/productos/{id}/movimientos      Historial de un producto
+40. GET    /api/productos/movimientos           Historial general de movimientos
+
+[Notificaciones]
+41. GET    /api/notificaciones                  Mis notificaciones
+42. PATCH  /api/notificaciones/{id}/leida       Marcar una como leída
+43. PATCH  /api/notificaciones/leidas           Marcar todas como leídas
+
+[Reportes]
+44. GET    /api/reportes/resumen-mensual        Resumen mensual de ingresos y egresos
+45. GET    /api/reportes/indicadores            Indicadores del panel
+46. GET    /api/reportes/ingresos-por-mes       Ingresos por mes de un año
+
+==============================================================================
+DETALLE DE CADA ENDPOINT
+==============================================================================
+
+------------------------------------------------------------------------------
+1) GET /api/salud   [Salud]
+------------------------------------------------------------------------------
+Que hace: Estado de la API y la base de datos. Comprueba que el servidor responde y que la conexión con la base de datos sgb funciona.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/salud
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  503 Service Unavailable -> La base de datos no esta disponible en este momento
+
+------------------------------------------------------------------------------
+2) POST /api/auth/registro   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Registrar una cuenta de cliente. Crea un usuario con rol Cliente. La contraseña se guarda cifrada con bcrypt.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/auth/registro
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre (máx. 100)
+  - apellido (string, obligatorio): Apellido (máx. 100)
+  - correo (string, obligatorio): Correo único
+  - contrasena (string, obligatorio): Mínimo 8 caracteres, con letras y números
+  - telefono (string): Teléfono (opcional)
+Ejemplo:
+  {
+    "nombre": "Laura",
+    "apellido": "Gomez",
+    "correo": "laura742037@correo.com",
+    "contrasena": "Clave1234",
+    "telefono": "3001234567"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  409 Conflict -> Ya existe una cuenta con ese correo
+
+------------------------------------------------------------------------------
+3) POST /api/auth/login   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Iniciar sesión (obtener token JWT). Valida correo y contraseña. Si son correctos responde "Autenticación satisfactoria" y entrega un token JWT que se envía en las demás peticiones con el encabezado Authorization: Bearer <token>. Tras 5 intentos fallidos el correo se bloquea 15 minutos.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/auth/login
+Cuerpo: JSON
+  - correo (string, obligatorio): Correo registrado
+  - contrasena (string, obligatorio): Contraseña
+Ejemplo:
+  {
+    "correo": "cliente@demo.com",
+    "contrasena": "Demo1234"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Debe enviar correo y contrasena
+  401 Unauthorized -> Correo o contrasena incorrectos
+  403 Forbidden -> Su cuenta esta desactivada. Contacte al administrador
+  429 Too Many Requests -> Demasiados intentos fallidos. Espere 15 minutos e intente de nuevo
+
+------------------------------------------------------------------------------
+4) POST /api/auth/recuperar   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Solicitar código de recuperación. Genera un código de 6 dígitos válido por 15 minutos (se guarda cifrado en usuario.token_recuperacion). Responde igual exista o no el correo. En modo desarrollo el código viene en la respuesta porque el proyecto no tiene servidor de correo.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/auth/recuperar
+Cuerpo: JSON
+  - correo (string, obligatorio): Correo de la cuenta
+Ejemplo:
+  {
+    "correo": "laura742037@correo.com"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+
+------------------------------------------------------------------------------
+5) POST /api/auth/restablecer   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Restablecer contraseña con el código. Cambia la contraseña si el código es correcto y no ha vencido. El código queda inutilizado.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/auth/restablecer
+Cuerpo: JSON
+  - correo (string, obligatorio): Correo de la cuenta
+  - codigo (string, obligatorio): Código de 6 dígitos
+  - contrasenaNueva (string, obligatorio): Mínimo 8 caracteres, letras y números
+Ejemplo:
+  {
+    "correo": "laura742037@correo.com",
+    "codigo": "308538",
+    "contrasenaNueva": "Nueva1234"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  400 Bad Request -> El codigo no es valido o ya expiro
+
+------------------------------------------------------------------------------
+6) GET /api/auth/perfil   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Ver mi perfil. Devuelve los datos del usuario dueño del token.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/auth/perfil
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+7) PUT /api/auth/perfil   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Editar mi perfil. El usuario actualiza su nombre, apellido o teléfono. El correo y el rol no se cambian aquí.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/auth/perfil
+Cuerpo: JSON
+  - nombre (string): Nombre
+  - apellido (string): Apellido
+  - telefono (string): Teléfono
+Ejemplo:
+  {
+    "telefono": "3000000003"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+8) PUT /api/auth/contrasena   [Autenticación]
+------------------------------------------------------------------------------
+Que hace: Cambiar mi contraseña. Cambia la contraseña verificando primero la contraseña actual.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/auth/contrasena
+Cuerpo: JSON
+  - contrasenaActual (string, obligatorio): Contraseña actual
+  - contrasenaNueva (string, obligatorio): Mínimo 8 caracteres, letras y números
+Ejemplo:
+  {
+    "contrasenaActual": "Demo1234",
+    "contrasenaNueva": "Demo1234"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  400 Bad Request -> La contrasena actual no es correcta
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+9) GET /api/usuarios/barberos   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Listar barberos activos. Lista los barberos activos (id y nombre) para elegir al agendar una cita.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/usuarios/barberos
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+10) GET /api/usuarios   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Listar usuarios. Lista los usuarios con filtros opcionales. Para cada usuario incluye el número de citas completadas y el total pagado (verificado).
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/usuarios?rol=Barbero
+Parametros:
+  - rol (consulta ?): Administrador, Barbero o Cliente
+  - activo (consulta ?): true / false
+  - buscar (consulta ?): Texto en nombre o correo
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+11) GET /api/usuarios/{id}   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Consultar un usuario. Devuelve un usuario por su id.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/usuarios/2
+Parametros:
+  - id (en la ruta, obligatorio): Id del usuario
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Usuario no encontrado
+
+------------------------------------------------------------------------------
+12) POST /api/usuarios   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Crear usuario. El administrador crea cuentas de cualquier rol (por ejemplo, barberos).
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/usuarios
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre
+  - apellido (string, obligatorio): Apellido
+  - correo (string, obligatorio): Correo único
+  - contrasena (string, obligatorio): Mínimo 8 caracteres, letras y números
+  - rol (string, obligatorio): Administrador, Barbero o Cliente
+  - telefono (string): Teléfono
+Ejemplo:
+  {
+    "nombre": "Pedro",
+    "apellido": "Navaja",
+    "correo": "pedro742037@barberia.com",
+    "contrasena": "Barbero123",
+    "rol": "Barbero",
+    "telefono": "3011112233"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  409 Conflict -> Ya existe una cuenta con ese correo
+
+------------------------------------------------------------------------------
+13) PUT /api/usuarios/{id}   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Actualizar usuario. Actualiza nombre, apellido, teléfono o rol. Un administrador no puede quitarse a sí mismo el rol.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/usuarios/22
+Parametros:
+  - id (en la ruta, obligatorio): Id del usuario
+Cuerpo: JSON
+  - nombre (string): Nombre
+  - apellido (string): Apellido
+  - telefono (string): Teléfono
+  - rol (string): Nuevo rol
+Ejemplo:
+  {
+    "telefono": "3019998877"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Usuario no encontrado
+  409 Conflict -> No puede quitarse a si mismo el rol de administrador
+
+------------------------------------------------------------------------------
+14) PATCH /api/usuarios/{id}/estado   [Usuarios]
+------------------------------------------------------------------------------
+Que hace: Activar o desactivar usuario. Los usuarios no se borran: se desactivan. Un usuario inactivo no puede iniciar sesión y su token deja de funcionar de inmediato.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/usuarios/22/estado
+Parametros:
+  - id (en la ruta, obligatorio): Id del usuario
+Cuerpo: JSON
+  - activo (boolean, obligatorio): true = activar, false = desactivar
+Ejemplo:
+  {
+    "activo": true
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Usuario no encontrado
+  409 Conflict -> No puede desactivar su propia cuenta
+
+------------------------------------------------------------------------------
+15) GET /api/servicios   [Servicios]
+------------------------------------------------------------------------------
+Que hace: Listar servicios. Catálogo de servicios activos. Con todos=true (solo administrador) incluye los desactivados.
+Acceso: Público (sin token); ?todos=true solo Administrador
+URL de ejemplo: http://localhost:3000/api/servicios
+Parametros:
+  - todos (consulta ?): Incluir desactivados (solo administrador)
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  403 Forbidden -> Solo el administrador puede ver los servicios desactivados
+
+------------------------------------------------------------------------------
+16) GET /api/servicios/{id}   [Servicios]
+------------------------------------------------------------------------------
+Que hace: Consultar un servicio. Devuelve un servicio activo por su id.
+Acceso: Público (sin token)
+URL de ejemplo: http://localhost:3000/api/servicios/8
+Parametros:
+  - id (en la ruta, obligatorio): Id del servicio
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  404 Not Found -> Servicio no encontrado
+
+------------------------------------------------------------------------------
+17) POST /api/servicios   [Servicios]
+------------------------------------------------------------------------------
+Que hace: Crear servicio. Agrega un servicio al catálogo.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/servicios
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre (máx. 100)
+  - precio (number, obligatorio): Precio en pesos (≥ 0)
+  - duracionMin (integer, obligatorio): Duración en minutos (5 a 480)
+  - categoria (string): Categoría (ej. Corte, Barba)
+  - descripcion (string): Descripción
+Ejemplo:
+  {
+    "nombre": "Afeitado Clásico 742037",
+    "descripcion": "Afeitado con navaja",
+    "precio": 22000,
+    "duracionMin": 30,
+    "categoria": "Barba"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+18) PUT /api/servicios/{id}   [Servicios]
+------------------------------------------------------------------------------
+Que hace: Actualizar servicio. Reemplaza los datos del servicio. El precio nuevo no cambia el precio de las citas ya agendadas (se guarda el precio aplicado en cita_servicio).
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/servicios/10
+Parametros:
+  - id (en la ruta, obligatorio): Id del servicio
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre
+  - precio (number, obligatorio): Precio
+  - duracionMin (integer, obligatorio): Duración en minutos
+  - categoria (string): Categoría
+  - descripcion (string): Descripción
+Ejemplo:
+  {
+    "nombre": "Afeitado Clásico 742037",
+    "descripcion": "Afeitado con navaja y toalla caliente",
+    "precio": 24000,
+    "duracionMin": 30,
+    "categoria": "Barba"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Servicio no encontrado
+
+------------------------------------------------------------------------------
+19) PATCH /api/servicios/{id}/estado   [Servicios]
+------------------------------------------------------------------------------
+Que hace: Activar o desactivar servicio. Los servicios no se borran (las citas antiguas los usan): se desactivan y dejan de ofrecerse.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/servicios/10/estado
+Parametros:
+  - id (en la ruta, obligatorio): Id del servicio
+Cuerpo: JSON
+  - activo (boolean, obligatorio): true / false
+Ejemplo:
+  {
+    "activo": true
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Servicio no encontrado
+
+------------------------------------------------------------------------------
+20) GET /api/horarios/barbero/{idBarbero}   [Horarios]
+------------------------------------------------------------------------------
+Que hace: Ver horario semanal de un barbero. Franjas de atención por día de la semana (1 = lunes ... 7 = domingo).
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/horarios/barbero/2
+Parametros:
+  - idBarbero (en la ruta, obligatorio): Id del barbero
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Barbero no encontrado
+
+------------------------------------------------------------------------------
+21) PUT /api/horarios/barbero/{idBarbero}   [Horarios]
+------------------------------------------------------------------------------
+Que hace: Definir horario semanal. Reemplaza todo el horario del barbero. Valida que la hora de fin sea posterior al inicio y que las franjas de un mismo día no se crucen. Una lista vacía deja al barbero sin horario.
+Acceso: Barbero (el suyo) o Administrador
+URL de ejemplo: http://localhost:3000/api/horarios/barbero/2
+Parametros:
+  - idBarbero (en la ruta, obligatorio): Id del barbero
+Cuerpo: JSON
+  - horarios (array, obligatorio): Lista de franjas { diaSemana (1-7), horaInicio "HH:MM", horaFin "HH:MM" }
+Ejemplo:
+  {
+    "horarios": [
+      {
+        "diaSemana": 1,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      },
+      {
+        "diaSemana": 2,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      },
+      {
+        "diaSemana": 3,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      },
+      {
+        "diaSemana": 4,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      },
+      {
+        "diaSemana": 5,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      },
+      {
+        "diaSemana": 6,
+        "horaInicio": "09:00",
+        "horaFin": "18:00"
+      }
+    ]
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Horario invalido
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Solo puede modificar su propio horario
+  404 Not Found -> Barbero no encontrado
+
+------------------------------------------------------------------------------
+22) GET /api/citas/disponibilidad   [Citas]
+------------------------------------------------------------------------------
+Que hace: Consultar horas disponibles. Horas libres de un barbero en una fecha para la duración del servicio, cada 30 minutos, según su horario y sus citas pendientes o confirmadas.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/citas/disponibilidad?idBarbero=2&fecha=2027-03-08&idServicio=8
+Parametros:
+  - idBarbero (consulta ?, obligatorio): Id del barbero
+  - fecha (consulta ?, obligatorio): AAAA-MM-DD
+  - idServicio (consulta ?, obligatorio): Id del servicio
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Barbero no encontrado
+  409 Conflict -> El servicio no esta disponible
+
+------------------------------------------------------------------------------
+23) POST /api/citas   [Citas]
+------------------------------------------------------------------------------
+Que hace: Agendar cita. Agenda una cita en estado "pendiente". Valida: fecha futura, que el barbero atienda ese día y la cita quepa en su horario, y que ni el barbero ni el cliente tengan otra cita que se cruce (con bloqueo para reservas simultáneas). Guarda el precio aplicado. Si no se confirma a tiempo (60 min por defecto) se cancela sola. Notifica al cliente, al barbero y al administrador.
+Acceso: Cliente (a su nombre) o Administrador (indica idCliente)
+URL de ejemplo: http://localhost:3000/api/citas
+Cuerpo: JSON
+  - idBarbero (integer, obligatorio): Id del barbero
+  - idServicio (integer, obligatorio): Id del servicio
+  - fechaHora (string, obligatorio): AAAA-MM-DDTHH:MM
+  - notas (string): Notas para el barbero (máx. 500)
+  - idCliente (integer): Solo administrador: cliente de la cita
+Ejemplo:
+  {
+    "idBarbero": 2,
+    "idServicio": 8,
+    "fechaHora": "2027-03-08T10:00",
+    "notas": "Corte bajito a los lados"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> La fecha y hora de la cita deben ser futuras
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Los barberos no agendan citas; las agenda el cliente o el administrador
+  404 Not Found -> Barbero no encontrado
+  409 Conflict -> El barbero ya tiene una cita en ese horario
+  409 Conflict -> El cliente ya tiene otra cita en ese horario
+  409 Conflict -> El barbero no atiende en ese horario. Consulte la disponibilidad
+
+------------------------------------------------------------------------------
+24) GET /api/citas   [Citas]
+------------------------------------------------------------------------------
+Que hace: Listar citas. El cliente ve sus citas, el barbero las suyas y el administrador todas. Incluye nombres, precio y estado del pago.
+Acceso: Cualquier usuario con sesión (cada rol ve solo lo suyo)
+URL de ejemplo: http://localhost:3000/api/citas?estado=pendiente
+Parametros:
+  - estado (consulta ?): pendiente, confirmada, cancelada o completada
+  - desde (consulta ?): AAAA-MM-DD
+  - hasta (consulta ?): AAAA-MM-DD
+  - idBarbero (consulta ?): Solo administrador
+  - idCliente (consulta ?): Solo administrador
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+25) GET /api/citas/{id}   [Citas]
+------------------------------------------------------------------------------
+Que hace: Consultar una cita. Devuelve una cita. Si pertenece a otra persona responde 404 (no revela que existe).
+Acceso: Dueño de la cita, su barbero o Administrador
+URL de ejemplo: http://localhost:3000/api/citas/11
+Parametros:
+  - id (en la ruta, obligatorio): Id de la cita
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Cita no encontrada
+
+------------------------------------------------------------------------------
+26) PUT /api/citas/{id}   [Citas]
+------------------------------------------------------------------------------
+Que hace: Reprogramar cita. Cambia la fecha y hora (y opcionalmente el barbero o el servicio) de una cita pendiente o confirmada, con las mismas validaciones de agenda. No cambia el estado.
+Acceso: Cliente (sus citas) o Administrador
+URL de ejemplo: http://localhost:3000/api/citas/11
+Parametros:
+  - id (en la ruta, obligatorio): Id de la cita
+Cuerpo: JSON
+  - fechaHora (string, obligatorio): AAAA-MM-DDTHH:MM
+  - idBarbero (integer): Otro barbero
+  - idServicio (integer): Otro servicio
+Ejemplo:
+  {
+    "fechaHora": "2027-03-08T11:00"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Los barberos no reprograman citas
+  404 Not Found -> Cita no encontrada
+  409 Conflict -> No se puede reprogramar una cita completada
+
+------------------------------------------------------------------------------
+27) PATCH /api/citas/{id}/estado   [Citas]
+------------------------------------------------------------------------------
+Que hace: Confirmar, completar o cancelar cita. Transiciones permitidas: pendiente → confirmada o cancelada; confirmada → completada o cancelada. Las citas canceladas o completadas no cambian. Notifica a los involucrados (la cancelación también al administrador, RF05).
+Acceso: Barbero/Administrador (confirmar y completar); los tres roles pueden cancelar lo suyo
+URL de ejemplo: http://localhost:3000/api/citas/11/estado
+Parametros:
+  - id (en la ruta, obligatorio): Id de la cita
+Cuerpo: JSON
+  - estado (string, obligatorio): confirmada, cancelada o completada
+Ejemplo:
+  {
+    "estado": "confirmada"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> El cliente solo puede cancelar sus citas
+  404 Not Found -> Cita no encontrada
+  409 Conflict -> No se puede pasar una cita de "completada" a "cancelada"
+
+------------------------------------------------------------------------------
+28) POST /api/pagos   [Pagos]
+------------------------------------------------------------------------------
+Que hace: Registrar pago de una cita. Efectivo: se registra pendiente y se paga en la barbería. Transferencia: se envía como multipart/form-data con la imagen del comprobante (JPG, PNG o WEBP, máx. 5 MB). El monto es el precio aplicado de la cita. Notifica al administrador.
+Acceso: Cliente (sus citas) o Administrador
+URL de ejemplo: http://localhost:3000/api/pagos
+Cuerpo: JSON, o form-data cuando se adjunta el archivo "comprobante"
+  - idCita (integer, obligatorio): Id de la cita
+  - metodoPago (string, obligatorio): efectivo o transferencia
+  - comprobante (file): Imagen del comprobante (solo transferencia)
+Ejemplo:
+  {
+    "idCita": 11,
+    "metodoPago": "efectivo"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Para transferencia debe adjuntar la imagen del comprobante (campo "comprobante")
+  400 Bad Request -> El comprobante debe ser una imagen JPG, PNG o WEBP
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Los barberos no registran pagos
+  404 Not Found -> Cita no encontrada
+  409 Conflict -> Esta cita ya tiene un pago registrado
+  409 Conflict -> No se puede pagar una cita cancelada
+
+------------------------------------------------------------------------------
+29) GET /api/pagos   [Pagos]
+------------------------------------------------------------------------------
+Que hace: Listar pagos. El cliente ve sus pagos, el barbero los de sus citas y el administrador todos.
+Acceso: Cualquier usuario con sesión (cada rol ve solo lo suyo)
+URL de ejemplo: http://localhost:3000/api/pagos
+Parametros:
+  - estado (consulta ?): pendiente, verificado o rechazado
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+30) GET /api/pagos/{id}   [Pagos]
+------------------------------------------------------------------------------
+Que hace: Consultar un pago. Devuelve un pago.
+Acceso: Dueño, su barbero o Administrador
+URL de ejemplo: http://localhost:3000/api/pagos/7
+Parametros:
+  - id (en la ruta, obligatorio): Id del pago
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Pago no encontrado
+
+------------------------------------------------------------------------------
+31) GET /api/pagos/{id}/comprobante   [Pagos]
+------------------------------------------------------------------------------
+Que hace: Descargar comprobante. Devuelve la imagen del comprobante. Los comprobantes no son archivos públicos: solo se descargan con un token autorizado.
+Acceso: Dueño, su barbero o Administrador
+URL de ejemplo: http://localhost:3000/api/pagos/{id}/comprobante
+Parametros:
+  - id (en la ruta, obligatorio): Id del pago
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> devuelve la imagen del comprobante
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Comprobante no encontrado
+
+------------------------------------------------------------------------------
+32) PATCH /api/pagos/{id}/estado   [Pagos]
+------------------------------------------------------------------------------
+Que hace: Verificar o rechazar pago. El administrador revisa el pago (o el comprobante) y lo marca verificado o rechazado. Solo cuentan como ingresos los pagos verificados. Notifica al cliente.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/pagos/7/estado
+Parametros:
+  - id (en la ruta, obligatorio): Id del pago
+Cuerpo: JSON
+  - estadoPago (string, obligatorio): verificado o rechazado
+Ejemplo:
+  {
+    "estadoPago": "verificado"
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Pago no encontrado
+  409 Conflict -> El pago ya fue verificado
+
+------------------------------------------------------------------------------
+33) GET /api/productos   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Listar productos. Productos del inventario con su stock y alerta de stock bajo.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos?stockBajo=true
+Parametros:
+  - activos (consulta ?): Solo activos
+  - stockBajo (consulta ?): Solo bajo el mínimo
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+34) POST /api/productos   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Crear producto. Agrega un producto. Si trae stock inicial, queda registrado como primera entrada en el historial.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre
+  - precio (number, obligatorio): Precio de venta
+  - categoria (string): Categoría
+  - unidad (string): unidad, frasco, caja...
+  - stock (integer): Stock inicial
+  - stockMinimo (integer): Mínimo antes de alertar (por defecto 5)
+  - costoUnitario (number): Costo de compra del stock inicial
+  - descripcion (string): Descripción
+Ejemplo:
+  {
+    "nombre": "Cera Mate 742037",
+    "categoria": "Styling",
+    "unidad": "unidad",
+    "precio": 32000,
+    "stock": 10,
+    "stockMinimo": 4,
+    "costoUnitario": 18000
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+35) GET /api/productos/{id}   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Consultar producto. Devuelve un producto.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/10
+Parametros:
+  - id (en la ruta, obligatorio): Id del producto
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Producto no encontrado
+
+------------------------------------------------------------------------------
+36) PUT /api/productos/{id}   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Actualizar producto. Actualiza los datos descriptivos. El stock NO se cambia aquí: solo con movimientos, para conservar el historial.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/10
+Parametros:
+  - id (en la ruta, obligatorio): Id del producto
+Cuerpo: JSON
+  - nombre (string, obligatorio): Nombre
+  - precio (number, obligatorio): Precio
+  - categoria (string): Categoría
+  - unidad (string): Unidad
+  - stockMinimo (integer): Stock mínimo
+  - descripcion (string): Descripción
+Ejemplo:
+  {
+    "nombre": "Cera Mate 742037",
+    "categoria": "Styling",
+    "unidad": "unidad",
+    "precio": 33000,
+    "stockMinimo": 4
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Producto no encontrado
+
+------------------------------------------------------------------------------
+37) PATCH /api/productos/{id}/estado   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Activar o desactivar producto. Desactiva un producto sin borrar su historial.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/10/estado
+Parametros:
+  - id (en la ruta, obligatorio): Id del producto
+Cuerpo: JSON
+  - activo (boolean, obligatorio): true / false
+Ejemplo:
+  {
+    "activo": true
+  }
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Producto no encontrado
+
+------------------------------------------------------------------------------
+38) POST /api/productos/{id}/movimientos   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Registrar entrada o salida. Registra un movimiento (RF11) y actualiza el stock en la misma transacción, con bloqueo de la fila. Una salida nunca deja el stock negativo. Si una salida deja el producto bajo el mínimo, avisa al administrador. Las entradas con costo cuentan como egresos en el resumen mensual.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/10/movimientos
+Parametros:
+  - id (en la ruta, obligatorio): Id del producto
+Cuerpo: JSON
+  - tipo (string, obligatorio): entrada o salida
+  - cantidad (integer, obligatorio): Cantidad (≥ 1)
+  - costoUnitario (number): Costo de compra (entradas)
+  - motivo (string): Motivo
+Ejemplo:
+  {
+    "tipo": "entrada",
+    "cantidad": 5,
+    "costoUnitario": 18000,
+    "motivo": "Compra a proveedor"
+  }
+Respuestas:
+  201 Created -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Producto no encontrado
+  409 Conflict -> Stock insuficiente: hay 2 y se intenta sacar 50
+  409 Conflict -> El producto esta desactivado
+
+------------------------------------------------------------------------------
+39) GET /api/productos/{id}/movimientos   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Historial de un producto. Entradas y salidas de un producto, de la más reciente a la más antigua.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/10/movimientos
+Parametros:
+  - id (en la ruta, obligatorio): Id del producto
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+  404 Not Found -> Producto no encontrado
+
+------------------------------------------------------------------------------
+40) GET /api/productos/movimientos   [Inventario]
+------------------------------------------------------------------------------
+Que hace: Historial general de movimientos. Todos los movimientos con filtros opcionales.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/productos/movimientos?idProducto=10
+Parametros:
+  - idProducto (consulta ?): Id del producto
+  - desde (consulta ?): AAAA-MM-DD
+  - hasta (consulta ?): AAAA-MM-DD
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+41) GET /api/notificaciones   [Notificaciones]
+------------------------------------------------------------------------------
+Que hace: Mis notificaciones. Notificaciones del usuario (las crea el sistema al agendar, confirmar, cancelar, pagar o con stock bajo) y el número de no leídas.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/notificaciones?noLeidas=true
+Parametros:
+  - noLeidas (consulta ?): Solo las no leídas
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+42) PATCH /api/notificaciones/{id}/leida   [Notificaciones]
+------------------------------------------------------------------------------
+Que hace: Marcar una como leída. Marca una notificación propia como leída. La de otro usuario responde 404.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/notificaciones/68/leida
+Parametros:
+  - id (en la ruta, obligatorio): Id de la notificación
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  404 Not Found -> Notificacion no encontrada
+
+------------------------------------------------------------------------------
+43) PATCH /api/notificaciones/leidas   [Notificaciones]
+------------------------------------------------------------------------------
+Que hace: Marcar todas como leídas. Marca como leídas todas las notificaciones del usuario.
+Acceso: Cualquier usuario con sesión
+URL de ejemplo: http://localhost:3000/api/notificaciones/leidas
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+
+------------------------------------------------------------------------------
+44) GET /api/reportes/resumen-mensual   [Reportes]
+------------------------------------------------------------------------------
+Que hace: Resumen mensual de ingresos y egresos. RF02. Ingresos = pagos verificados del mes; egresos = compras de inventario (entradas con costo); balance; pagos por método; citas por estado y servicios más solicitados. Por defecto, el mes actual.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/reportes/resumen-mensual
+Parametros:
+  - anio (consulta ?): Año (ej. 2026)
+  - mes (consulta ?): Mes 1-12
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+45) GET /api/reportes/indicadores   [Reportes]
+------------------------------------------------------------------------------
+Que hace: Indicadores del panel. Citas de hoy, citas pendientes, clientes activos, productos con stock bajo y pagos por verificar.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/reportes/indicadores
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+------------------------------------------------------------------------------
+46) GET /api/reportes/ingresos-por-mes   [Reportes]
+------------------------------------------------------------------------------
+Que hace: Ingresos por mes de un año. Ingresos verificados de cada mes (enero a diciembre) para la gráfica del panel.
+Acceso: Administrador
+URL de ejemplo: http://localhost:3000/api/reportes/ingresos-por-mes
+Parametros:
+  - anio (consulta ?): Año (por defecto el actual)
+Cuerpo: no lleva.
+Respuestas:
+  200 OK -> exito: true
+  400 Bad Request -> Datos invalidos (el detalle de cada campo viene en "errores")
+  401 Unauthorized -> Debe iniciar sesion (falta el token de acceso)
+  403 Forbidden -> Su rol no tiene permiso para esta accion
+
+==============================================================================
+Pruebas: carpeta pruebas/ (Postman). Coleccion completa SGB_API_EV04 (81 peticiones),
+coleccion SGB_API_EV04_Demostracion (pruebas P01 a P18) y entorno SGB_Local.
+==============================================================================
