@@ -1,0 +1,1041 @@
+{
+  "info": {
+    "name": "SGB - API EV04 - Demostracion (18 pruebas)",
+    "description": "18 pruebas representativas (P01 a P18), dos por modulo, para las capturas y el video de la evidencia GA7-220501096-AA5-EV04. Ejecutar en orden: primero la carpeta 00 - Preparacion. Usa el entorno \"SGB - Local\" y requiere datos-demo.sql. Aprendiz: Andres Cardenas - Ficha 3186668.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Preparacion",
+      "description": "Peticiones previas: estado de la API y tokens de administrador y barbero.",
+      "item": [
+        {
+          "name": "Estado de la API",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "const d = new Date(); d.setDate(d.getDate() + 14 + Math.floor(Math.random() * 105));",
+                  "while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);",
+                  "const f = (x) => `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,\"0\")}-${String(x.getDate()).padStart(2,\"0\")}`;",
+                  "pm.collectionVariables.set(\"fechaCita\", f(d));",
+                  "pm.collectionVariables.set(\"sufijo\", String(Date.now()).slice(-7));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/salud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "salud"
+              ]
+            },
+            "description": "Comprueba que la API y la base de datos responden y fija la fecha de prueba."
+          },
+          "response": []
+        },
+        {
+          "name": "Login administrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.collectionVariables.set(\"tokenAdmin\", pm.response.json().datos.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Obtiene el token del administrador.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoAdmin}}\",\n  \"contrasena\": \"{{contrasenaDemo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login barbero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.collectionVariables.set(\"tokenBarbero\", pm.response.json().datos.token);",
+                  "pm.collectionVariables.set(\"idBarbero\", pm.response.json().datos.usuario.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Obtiene el token y el id del barbero.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoBarbero}}\",\n  \"contrasena\": \"{{contrasenaDemo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 - Autenticacion",
+      "description": "Inicio de sesion con JWT.",
+      "item": [
+        {
+          "name": "P01 - Login cliente (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Mensaje: Autenticación satisfactoria\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Autenticación satisfactoria\"));",
+                  "pm.test(\"Devuelve un token JWT\", () => { pm.expect(pm.response.json().datos.token).to.be.a(\"string\") });",
+                  "pm.collectionVariables.set(\"tokenCliente\", pm.response.json().datos.token);",
+                  "pm.collectionVariables.set(\"idCliente\", pm.response.json().datos.usuario.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicio de sesion correcto: responde \"Autenticación satisfactoria\" y entrega el token JWT.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"{{contrasenaDemo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "P02 - Login con contrasena incorrecta (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));",
+                  "pm.test(\"Mensaje: Correo o contrasena incorrectos\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Correo o contrasena incorrectos\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Con una contrasena equivocada la API rechaza el acceso con 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoCliente}}\",\n  \"contrasena\": \"Incorrecta99\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Usuarios",
+      "description": "Gestion de usuarios y permisos por rol.",
+      "item": [
+        {
+          "name": "P03 - Crear barbero (admin, 201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Queda con rol Barbero\", () => { pm.expect(pm.response.json().datos.rol).to.eql(\"Barbero\") });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "El administrador crea una cuenta de barbero.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pedro\",\n  \"apellido\": \"Navaja\",\n  \"correo\": \"pedro{{sufijo}}@barberia.com\",\n  \"contrasena\": \"Barbero123\",\n  \"telefono\": \"3011112233\",\n  \"rol\": \"Barbero\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "P04 - Cliente intenta listar usuarios (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "Un cliente no tiene permiso para ver la lista de usuarios."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Servicios",
+      "description": "Catalogo de servicios.",
+      "item": [
+        {
+          "name": "P05 - Listar servicios sin token (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Hay servicios en el catalogo\", () => { pm.expect(pm.response.json().datos.length).to.be.above(0) });",
+                  "pm.collectionVariables.set(\"idServicioDemo\", pm.response.json().datos[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "servicios"
+              ]
+            },
+            "description": "El catalogo de servicios es publico."
+          },
+          "response": []
+        },
+        {
+          "name": "P06 - Crear servicio con precio negativo (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));",
+                  "pm.test(\"Indica el campo precio\", () => { pm.expect(pm.response.json().errores.map(e => e.campo)).to.include(\"precio\") });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/servicios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "servicios"
+              ]
+            },
+            "description": "La API valida los datos: un precio negativo se rechaza con 400 e indica el campo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Servicio invalido\",\n  \"precio\": -5,\n  \"duracionMin\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Horarios",
+      "description": "Disponibilidad semanal de los barberos.",
+      "item": [
+        {
+          "name": "P07 - Ver horario del barbero (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Tiene dias configurados\", () => { pm.expect(pm.response.json().datos.length).to.be.above(0) });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/horarios/barbero/{{idBarbero}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "horarios",
+                "barbero",
+                "{{idBarbero}}"
+              ]
+            },
+            "description": "Consulta los dias y horas en que atiende el barbero."
+          },
+          "response": []
+        },
+        {
+          "name": "P08 - Horario invalido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenBarbero}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/horarios/barbero/{{idBarbero}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "horarios",
+                "barbero",
+                "{{idBarbero}}"
+              ]
+            },
+            "description": "Un horario donde la hora final es anterior a la inicial se rechaza.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horarios\": [\n    {\n      \"diaSemana\": 1,\n      \"horaInicio\": \"18:00\",\n      \"horaFin\": \"09:00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Citas",
+      "description": "Agendamiento de citas con validacion de cruces.",
+      "item": [
+        {
+          "name": "P09 - Agendar cita (201)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const url = pm.variables.replaceIn(\"{{baseUrl}}/api/citas/disponibilidad?idBarbero={{idBarbero}}&fecha={{fechaCita}}&idServicio={{idServicioDemo}}\");",
+                  "pm.sendRequest({ url, method: \"GET\", header: { Authorization: \"Bearer \" + pm.collectionVariables.get(\"tokenCliente\") } }, (err, res) => {",
+                  "  const horas = (!err && res.code === 200) ? res.json().datos.horas : [];",
+                  "  const hora = horas.length ? horas[0] : \"10:00\";",
+                  "  const [hh, mm] = hora.split(\":\");",
+                  "  pm.collectionVariables.set(\"horaCita\", hora);",
+                  "  pm.collectionVariables.set(\"horaOcupada\", hh + \":\" + String(Number(mm) + 15).padStart(2, \"0\"));",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Queda pendiente de confirmacion\", () => { pm.expect(pm.response.json().datos.estado).to.eql(\"pendiente\") });",
+                  "pm.collectionVariables.set(\"idCita\", pm.response.json().datos.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "description": "El cliente agenda una cita en la primera hora libre del barbero.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idBarbero\": {{idBarbero}},\n  \"idServicio\": {{idServicioDemo}},\n  \"fechaHora\": \"{{fechaCita}}T{{horaCita}}\",\n  \"notas\": \"Corte bajito a los lados\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "P10 - Agendar en un horario ocupado (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));",
+                  "pm.test(\"Mensaje: El barbero ya tiene una cita en ese horario\", () => pm.expect(pm.response.json().mensaje).to.eql(\"El barbero ya tiene una cita en ese horario\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/citas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "citas"
+              ]
+            },
+            "description": "No se puede agendar una cita que se cruza con otra del mismo barbero.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idBarbero\": {{idBarbero}},\n  \"idServicio\": {{idServicioDemo}},\n  \"fechaHora\": \"{{fechaCita}}T{{horaOcupada}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - Pagos",
+      "description": "Registro de pagos.",
+      "item": [
+        {
+          "name": "P11 - Pagar cita en efectivo (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Pago pendiente de verificacion\", () => { pm.expect(pm.response.json().datos.estadoPago).to.eql(\"pendiente\") });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pagos"
+              ]
+            },
+            "description": "El cliente registra el pago de su cita en efectivo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCita\": {{idCita}},\n  \"metodoPago\": \"efectivo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "P12 - Pagar dos veces la misma cita (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));",
+                  "pm.test(\"Mensaje: Esta cita ya tiene un pago registrado\", () => pm.expect(pm.response.json().mensaje).to.eql(\"Esta cita ya tiene un pago registrado\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pagos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pagos"
+              ]
+            },
+            "description": "Una cita no puede tener dos pagos.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCita\": {{idCita}},\n  \"metodoPago\": \"efectivo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 - Inventario",
+      "description": "Inventario de productos.",
+      "item": [
+        {
+          "name": "P13 - Crear producto (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Stock inicial 10\", () => { pm.expect(pm.response.json().datos.stock).to.eql(10) });",
+                  "pm.collectionVariables.set(\"idProducto\", pm.response.json().datos.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/productos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos"
+              ]
+            },
+            "description": "El administrador crea un producto con stock inicial.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cera Mate {{sufijo}}\",\n  \"categoria\": \"Styling\",\n  \"unidad\": \"unidad\",\n  \"precio\": 32000,\n  \"stock\": 10,\n  \"stockMinimo\": 4,\n  \"costoUnitario\": 18000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "P14 - Salida mayor que el stock (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));",
+                  "pm.test(\"Mensaje contiene: Stock insuficiente\", () => pm.expect(pm.response.json().mensaje).to.include(\"Stock insuficiente\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/productos/{{idProducto}}/movimientos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "productos",
+                "{{idProducto}}",
+                "movimientos"
+              ]
+            },
+            "description": "No se puede sacar mas cantidad de la que hay: el stock nunca queda negativo.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"salida\",\n  \"cantidad\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 - Notificaciones",
+      "description": "Notificaciones automaticas.",
+      "item": [
+        {
+          "name": "P15 - Mis notificaciones (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Recibio el aviso de la cita agendada\", () => { pm.expect(pm.response.json().datos.notificaciones.some(n => n.mensaje.includes(\"agendada\"))).to.eql(true) });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notificaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones"
+              ]
+            },
+            "description": "El cliente recibio la notificacion automatica de su cita."
+          },
+          "response": []
+        },
+        {
+          "name": "P16 - Notificaciones sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notificaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notificaciones"
+              ]
+            },
+            "description": "Sin token de acceso la API no entrega informacion."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 - Reportes",
+      "description": "Reportes de ingresos y egresos.",
+      "item": [
+        {
+          "name": "P17 - Resumen mensual (admin, 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"exito = true\", () => pm.expect(pm.response.json().exito).to.eql(true));",
+                  "pm.test(\"Trae ingresos, egresos y balance\", () => { const d = pm.response.json().datos; pm.expect(d).to.include.keys(\"ingresos\",\"egresos\",\"balance\") });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reportes/resumen-mensual",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "resumen-mensual"
+              ]
+            },
+            "description": "Resumen de ingresos y egresos del mes actual."
+          },
+          "response": []
+        },
+        {
+          "name": "P18 - Cliente intenta ver reportes (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Codigo de estado 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"exito = false\", () => pm.expect(pm.response.json().exito).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCliente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reportes/indicadores",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reportes",
+                "indicadores"
+              ]
+            },
+            "description": "Los reportes son exclusivos del administrador."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "correoAdmin",
+      "value": "admin@demo.com"
+    },
+    {
+      "key": "correoBarbero",
+      "value": "barbero@demo.com"
+    },
+    {
+      "key": "correoCliente",
+      "value": "cliente@demo.com"
+    },
+    {
+      "key": "contrasenaDemo",
+      "value": "Demo1234"
+    }
+  ]
+}
