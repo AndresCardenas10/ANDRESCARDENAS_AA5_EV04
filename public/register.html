@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGB — Crear cuenta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body class="auth-page">
+
+<div class="auth-shell">
+  <!-- PANEL VISUAL -->
+  <div class="auth-visual">
+    <div class="auth-visual-bg" style="background-image:url('https://images.pexels.com/photos/3998406/pexels-photo-3998406.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+    <div class="auth-visual-top">
+      <a href="index.html" class="nav-logo">S<span>GB</span></a>
+    </div>
+    <div class="auth-visual-bottom">
+      <p class="auth-quote">"Desde que uso SGB para reservar, nunca más volví a hacer fila. Todo queda listo en segundos."</p>
+      <div class="auth-quote-author">Cliente frecuente · Bogotá</div>
+    </div>
+  </div>
+
+  <!-- FORMULARIO -->
+  <div class="auth-form-side">
+    <div class="auth-card">
+      <a href="index.html" class="auth-back"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+      <h1 class="auth-title">Crea tu cuenta</h1>
+      <p class="auth-subtitle">Regístrate para reservar citas, ver tu historial y gestionar tus pagos desde tu propio panel.</p>
+
+      <div class="auth-form-grid">
+        <div class="field full">
+          <label>Nombre completo</label>
+          <input type="text" id="regName" placeholder="Tu nombre y apellido">
+          <div class="field-error"></div>
+        </div>
+        <div class="field full">
+          <label>Correo electrónico</label>
+          <input type="email" id="regEmail" placeholder="tucorreo@ejemplo.com">
+          <div class="field-error"></div>
+        </div>
+        <div class="field full">
+          <label>Teléfono</label>
+          <input type="tel" id="regPhone" placeholder="+57 300 000 0000">
+          <div class="field-error"></div>
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="regPassword" placeholder="••••••">
+          <div class="password-strength" id="pwStrength"><span></span><span></span><span></span></div>
+          <div class="field-error"></div>
+        </div>
+        <div class="field">
+          <label>Confirmar contraseña</label>
+          <input type="password" id="regPassword2" placeholder="••••••">
+          <div class="field-error"></div>
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="regTerms">
+        <label for="regTerms">Acepto los <a href="#">términos y condiciones</a> y el tratamiento de mis datos personales conforme a la política de privacidad de SGB.</label>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="handleRegister()">Crear cuenta</button>
+
+      <p class="auth-footer-note">¿Ya tienes cuenta? <a href="index.html?login=1">Inicia sesión</a></p>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/api.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/register.js"></script>
+</body>
+</html>

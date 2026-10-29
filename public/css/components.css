@@ -1,0 +1,138 @@
+/* ============================================================
+   SGB — components.css
+   Componentes reutilizables: botones, inputs, badges, tablas,
+   modales, tarjetas. Estilo Neumorphism (Soft UI).
+   ============================================================ */
+
+/* ── Botones ── */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: .8rem;
+  border: none;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+.btn-primary {
+  background: linear-gradient(145deg, var(--blue-light), var(--blue));
+  color: #fff;
+  padding: .95rem 2.2rem;
+  border-radius: var(--r-full);
+  box-shadow: 6px 6px 14px rgba(27,58,107,.28), -4px -4px 10px rgba(255,255,255,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 8px 10px 20px rgba(27,58,107,.32), -4px -4px 10px rgba(255,255,255,.4); }
+.btn-primary:active { transform: translateY(0); box-shadow: inset 3px 3px 8px rgba(10,20,40,.4), inset -2px -2px 6px rgba(127,189,255,.25); }
+
+.btn-ghost {
+  background: var(--surface);
+  color: var(--navy);
+  padding: .9rem 2rem;
+  border-radius: var(--r-full);
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+}
+.btn-ghost:hover { color: var(--blue); }
+.btn-ghost:active { box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light); }
+
+.btn-ghost-dark {
+  background: var(--surface-dark);
+  color: rgba(255,255,255,.85);
+  padding: .7rem 1.6rem;
+  border-radius: var(--r-full);
+  box-shadow: 5px 5px 10px var(--shadow-dark-on-dark), -5px -5px 10px var(--shadow-light-on-dark);
+}
+.btn-ghost-dark:hover { color: #fff; }
+.btn-ghost-dark:active { box-shadow: inset 3px 3px 7px var(--shadow-dark-on-dark), inset -2px -2px 6px var(--shadow-light-on-dark); }
+
+.btn-sm { padding: .55rem 1.2rem; font-size: .72rem; border-radius: var(--r-full); }
+.btn-block { width: 100%; }
+.btn-danger { background: linear-gradient(145deg,#f87171,#ef4444); color: #fff; }
+
+/* ── Inputs / formularios neumórficos ── */
+.field { margin-bottom: 1.35rem; }
+.field label {
+  display: block; font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gray-text); margin-bottom: .6rem;
+}
+.field input, .field select, .field textarea {
+  width: 100%; border: none; outline: none;
+  font-family: var(--font-body); font-size: .92rem; color: var(--navy);
+  padding: .95rem 1.15rem; border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+  transition: box-shadow var(--t-fast) var(--ease);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light), 0 0 0 3px rgba(90,167,255,.18);
+}
+.field input::placeholder { color: var(--gray-text); opacity: .65; }
+.field-hint { font-size: .75rem; color: var(--gray-text); margin-top: .45rem; }
+.field-error { color: var(--danger); font-size: .8rem; margin: .5rem 0 1rem; display: none; }
+.field.has-error input { box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light), 0 0 0 3px rgba(239,68,68,.22); }
+.field.has-error .field-error { display: block; }
+
+/* ── Badges ── */
+.badge { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .8rem; border-radius: var(--r-full); font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.badge-green  { background: rgba(34,197,94,.14); color: #16a34a; box-shadow: inset 0 0 0 1px rgba(34,197,94,.15); }
+.badge-yellow { background: rgba(234,179,8,.15); color: #a16207; box-shadow: inset 0 0 0 1px rgba(234,179,8,.15); }
+.badge-blue   { background: rgba(90,167,255,.14); color: var(--blue); box-shadow: inset 0 0 0 1px rgba(90,167,255,.15); }
+.badge-red    { background: rgba(239,68,68,.14); color: #dc2626; box-shadow: inset 0 0 0 1px rgba(239,68,68,.15); }
+.badge-gray   { background: rgba(92,118,153,.12); color: var(--gray-text); box-shadow: inset 0 0 0 1px rgba(92,118,153,.12); }
+.badge-orange { background: rgba(249,115,22,.14); color: #c2410c; box-shadow: inset 0 0 0 1px rgba(249,115,22,.15); }
+
+/* ── Cards ── */
+.card-neu { background: var(--surface); border-radius: var(--r-lg); box-shadow: 9px 9px 20px var(--shadow-dark), -9px -9px 20px var(--shadow-light); }
+.card-neu-flat { background: var(--surface); border-radius: var(--r-md); box-shadow: 5px 5px 12px var(--shadow-dark), -5px -5px 12px var(--shadow-light); }
+
+/* ── Tablas ── */
+.table-wrap { overflow-x: auto; }
+table.neu-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.neu-table th { padding: .9rem 1.5rem; text-align: left; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gray-text); font-weight: 700; background: var(--surface-sunken); }
+.neu-table th:first-child { border-top-left-radius: var(--r-sm); }
+.neu-table th:last-child { border-top-right-radius: var(--r-sm); }
+.neu-table td { padding: 1rem 1.5rem; font-size: .875rem; color: var(--navy); border-bottom: 1px solid rgba(151,183,222,.25); }
+.neu-table tr:last-child td { border-bottom: none; }
+.neu-table tbody tr { transition: background var(--t-fast); }
+.neu-table tbody tr:hover td { background: rgba(90,167,255,.035); }
+
+/* ── Modal (login / register / cancel / crud) ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(27,58,107,.72);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; padding: 1.5rem;
+  transition: opacity var(--t-med) var(--ease);
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--surface);
+  width: 100%; max-width: 460px;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  transform: translateY(24px) scale(.98);
+  transition: transform var(--t-med) var(--ease);
+  box-shadow: 20px 24px 60px rgba(10,22,45,.45), -8px -8px 24px rgba(255,255,255,.06);
+  position: relative;
+}
+.modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
+.modal-top { background: var(--surface-dark); padding: 2.4rem 2.4rem 1.8rem; }
+.modal-logo { font-family: var(--font-display); font-size: 1.6rem; color: #fff; letter-spacing: .1em; margin-bottom: .5rem; }
+.modal-logo span { color: var(--blue-light); }
+.modal-top p { color: rgba(255,255,255,.55); font-size: .875rem; }
+.modal-body, .modal-body-inner { padding: 2.2rem 2.4rem 2.4rem; }
+.modal-close {
+  position: absolute; top: 1.1rem; right: 1.1rem;
+  width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255,255,255,.08); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: .9rem;
+  transition: background var(--t-fast);
+}
+.modal-close:hover { background: rgba(255,255,255,.18); }
+.modal-header { padding: 1.6rem 2.2rem; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-family: var(--font-serif); font-size: 1.15rem; color: var(--navy); }
+.modal-close-btn { background: var(--surface); width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; color: var(--gray-text); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; color: var(--gray-text); padding: 3rem 1.5rem; font-size: .9rem; }

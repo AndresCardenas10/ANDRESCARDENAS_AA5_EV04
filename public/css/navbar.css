@@ -1,0 +1,107 @@
+/* ============================================================
+   SGB — navbar.css — usado en index.html, register.html, forgot-password.html
+   ============================================================ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 3rem;
+  background: transparent;
+  transition: background var(--t-med), backdrop-filter var(--t-med), box-shadow var(--t-med), transform var(--t-med) var(--ease);
+}
+nav.scrolled {
+  background: rgba(27,58,107,.78);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px rgba(10,22,45,.25);
+}
+nav.nav-hidden { transform: translateY(-110%); }
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: .1em;
+  color: var(--white);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--blue-light); }
+.nav-links { display: flex; gap: 2.5rem; list-style: none; }
+.nav-links a {
+  color: rgba(255,255,255,.75);
+  text-decoration: none;
+  font-size: .82rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: color .2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; left: 0; bottom: -6px; width: 0; height: 1.5px;
+  background: var(--blue-light); transition: width var(--t-fast) var(--ease);
+}
+.nav-links a:hover { color: var(--white); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta { display: flex; gap: .85rem; align-items: center; }
+
+.btn-outline-nav {
+  border: none;
+  color: var(--white);
+  background: rgba(255,255,255,.06);
+  box-shadow: 4px 4px 10px var(--shadow-dark-on-dark), -3px -3px 8px var(--shadow-light-on-dark);
+  padding: .6rem 1.4rem;
+  border-radius: var(--r-full);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+.btn-outline-nav:hover { color: var(--blue-light); }
+
+.btn-primary-nav {
+  background: linear-gradient(145deg, var(--blue-light), var(--blue));
+  color: var(--white);
+  border: none;
+  padding: .6rem 1.4rem;
+  border-radius: var(--r-full);
+  font-size: .78rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: var(--font-body);
+  font-weight: 500;
+  box-shadow: 4px 4px 10px rgba(10,22,45,.35), -2px -2px 6px rgba(255,255,255,.06);
+}
+.btn-primary-nav:hover { transform: translateY(-1px); box-shadow: 6px 8px 16px rgba(10,22,45,.4); }
+.hamburger { display: none; background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; }
+
+/* ── Mobile drawer ── */
+.mobile-drawer {
+  position: fixed; top: 0; right: -100%; width: 290px; bottom: 0;
+  background: var(--surface-dark);
+  z-index: 150; padding: 5rem 2rem 2rem;
+  transition: right var(--t-med) var(--ease);
+  box-shadow: -20px 0 50px rgba(10,22,45,.4);
+}
+.mobile-drawer.open { right: 0; }
+.mobile-drawer ul { list-style: none; display: flex; flex-direction: column; gap: .25rem; }
+.mobile-drawer ul li a {
+  display: block; padding: .85rem 0;
+  color: rgba(255,255,255,.7); text-decoration: none;
+  font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,.06);
+  transition: color .2s;
+}
+.mobile-drawer ul li a:hover { color: white; }
+.mobile-drawer-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  background: rgba(255,255,255,.06); border: none; color: white; width: 34px; height: 34px;
+  border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+}
+.mobile-drawer-btns { margin-top: 2rem; display: flex; flex-direction: column; gap: .75rem; }
+
+@media (max-width: 1024px) {
+  nav { padding: 1.1rem 1.5rem; }
+  .nav-links { display: none; }
+  .hamburger { display: block; }
+}

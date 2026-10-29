@@ -1,0 +1,3982 @@
+# Documentacion OpenAPI 3 de la API del SGB (se visualiza en http://localhost:3000/api-docs)
+openapi: 3.0.3
+info:
+  title: API REST - Sistema Gestión Barbería (SGB)
+  version: 1.0.0
+  description: |-
+    Servicios web del proyecto SGB (Evidencia GA7-220501096-AA5-EV03). Aprendiz: Andrés Cárdenas, ficha 3186668.
+
+    **Autenticación:** inicie sesión con `POST /api/auth/login`, copie el `token` y péguelo en el botón **Authorize** (arriba a la derecha).
+
+    **Formato:** todas las respuestas JSON tienen la forma `{ "exito": true|false, "mensaje": "...", "datos": ... }`. Los errores de validación incluyen `errores: [{ campo, mensaje }]`.
+
+    Cuentas demo (datos-demo.sql): admin@demo.com, barbero@demo.com y cliente@demo.com, contraseña Demo1234.
+servers:
+  - url: http://localhost:3000
+    description: Servidor local
+tags:
+  - name: Salud
+  - name: Autenticación
+  - name: Usuarios
+  - name: Servicios
+  - name: Horarios
+  - name: Citas
+  - name: Pagos
+  - name: Inventario
+  - name: Notificaciones
+  - name: Reportes
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RespuestaError:
+      type: object
+      properties:
+        exito:
+          type: boolean
+          example: false
+        mensaje:
+          type: string
+        errores:
+          type: array
+          items:
+            type: object
+            properties:
+              campo:
+                type: string
+              mensaje:
+                type: string
+paths:
+  /api/salud:
+    get:
+      tags:
+        - Salud
+      summary: Estado de la API y la base de datos
+      description: |-
+        Comprueba que el servidor responde y que la conexión con la base de datos sgb funciona.
+
+        **Acceso:** Público (sin token)
+      operationId: get__api_salud
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: API del SGB activa
+                baseDatos: conectada
+                documentacion: /api-docs
+        "503":
+          description: La base de datos no esta disponible en este momento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: La base de datos no esta disponible en este momento
+                  value:
+                    exito: false
+                    mensaje: La base de datos no esta disponible en este momento
+  /api/auth/registro:
+    post:
+      tags:
+        - Autenticación
+      summary: Registrar una cuenta de cliente
+      description: |-
+        Crea un usuario con rol Cliente. La contraseña se guarda cifrada con bcrypt.
+
+        **Acceso:** Público (sin token)
+      operationId: post__api_auth_registro
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Cuenta creada correctamente. Ya puede iniciar sesion
+                datos:
+                  id: 21
+                  idRol: 3
+                  rol: Cliente
+                  nombre: Laura
+                  apellido: Gomez
+                  nombreCompleto: Laura Gomez
+                  correo: laura742037@correo.com
+                  telefono: "3001234567"
+                  activo: true
+                  creadoEn: 2026-10-29 00:29:02
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "409":
+          description: Ya existe una cuenta con ese correo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Ya existe una cuenta con ese correo
+                  value:
+                    exito: false
+                    mensaje: Ya existe una cuenta con ese correo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre (máx. 100)
+                apellido:
+                  type: string
+                  description: Apellido (máx. 100)
+                correo:
+                  type: string
+                  description: Correo único
+                contrasena:
+                  type: string
+                  description: Mínimo 8 caracteres, con letras y números
+                telefono:
+                  type: string
+                  description: Teléfono (opcional)
+              required:
+                - nombre
+                - apellido
+                - correo
+                - contrasena
+            example:
+              nombre: Laura
+              apellido: Gomez
+              correo: laura742037@correo.com
+              contrasena: Clave1234
+              telefono: "3001234567"
+  /api/auth/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Iniciar sesión (obtener token JWT)
+      description: |-
+        Valida correo y contraseña. Si son correctos responde "Autenticación satisfactoria" y entrega un token JWT que se envía en las demás peticiones con el encabezado Authorization: Bearer <token>. Tras 5 intentos fallidos el correo se bloquea 15 minutos.
+
+        **Acceso:** Público (sin token)
+      operationId: post__api_auth_login
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Autenticación satisfactoria
+                datos:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  tipoToken: Bearer
+                  expiraEn: 8h
+                  usuario:
+                    id: 3
+                    idRol: 3
+                    rol: Cliente
+                    nombre: Juan
+                    apellido: Cliente
+                    nombreCompleto: Juan Cliente
+                    correo: cliente@demo.com
+                    telefono: "3000000003"
+                    activo: true
+                    creadoEn: 2026-10-29 00:15:10
+        "400":
+          description: Debe enviar correo y contrasena
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe enviar correo y contrasena
+                  value:
+                    exito: false
+                    mensaje: Debe enviar correo y contrasena
+        "401":
+          description: Correo o contrasena incorrectos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Correo o contrasena incorrectos
+                  value:
+                    exito: false
+                    mensaje: Correo o contrasena incorrectos
+        "403":
+          description: Su cuenta esta desactivada. Contacte al administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su cuenta esta desactivada. Contacte al administrador
+                  value:
+                    exito: false
+                    mensaje: Su cuenta esta desactivada. Contacte al administrador
+        "429":
+          description: Demasiados intentos fallidos. Espere 15 minutos e intente de nuevo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Demasiados intentos fallidos. Espere 15 minutos e intente de nuevo
+                  value:
+                    exito: false
+                    mensaje: Demasiados intentos fallidos. Espere 15 minutos e intente de nuevo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  description: Correo registrado
+                contrasena:
+                  type: string
+                  description: Contraseña
+              required:
+                - correo
+                - contrasena
+            example:
+              correo: cliente@demo.com
+              contrasena: Demo1234
+  /api/auth/recuperar:
+    post:
+      tags:
+        - Autenticación
+      summary: Solicitar código de recuperación
+      description: |-
+        Genera un código de 6 dígitos válido por 15 minutos (se guarda cifrado en usuario.token_recuperacion). Responde igual exista o no el correo. En modo desarrollo el código viene en la respuesta porque el proyecto no tiene servidor de correo.
+
+        **Acceso:** Público (sin token)
+      operationId: post__api_auth_recuperar
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Si el correo esta registrado, se genero un codigo de recuperacion valido por 15 minutos
+                datos:
+                  codigo: "308538"
+                  nota: Solo en modo desarrollo; en produccion se enviaria por correo
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  description: Correo de la cuenta
+              required:
+                - correo
+            example:
+              correo: laura742037@correo.com
+  /api/auth/restablecer:
+    post:
+      tags:
+        - Autenticación
+      summary: Restablecer contraseña con el código
+      description: |-
+        Cambia la contraseña si el código es correcto y no ha vencido. El código queda inutilizado.
+
+        **Acceso:** Público (sin token)
+      operationId: post__api_auth_restablecer
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Contrasena restablecida. Ya puede iniciar sesion
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores") | El codigo no es valido o ya expiro
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+                caso2:
+                  summary: El codigo no es valido o ya expiro
+                  value:
+                    exito: false
+                    mensaje: El codigo no es valido o ya expiro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correo:
+                  type: string
+                  description: Correo de la cuenta
+                codigo:
+                  type: string
+                  description: Código de 6 dígitos
+                contrasenaNueva:
+                  type: string
+                  description: Mínimo 8 caracteres, letras y números
+              required:
+                - correo
+                - codigo
+                - contrasenaNueva
+            example:
+              correo: laura742037@correo.com
+              codigo: "308538"
+              contrasenaNueva: Nueva1234
+  /api/auth/perfil:
+    get:
+      tags:
+        - Autenticación
+      summary: Ver mi perfil
+      description: |-
+        Devuelve los datos del usuario dueño del token.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: get__api_auth_perfil
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 3
+                  idRol: 3
+                  rol: Cliente
+                  nombre: Juan
+                  apellido: Cliente
+                  nombreCompleto: Juan Cliente
+                  correo: cliente@demo.com
+                  telefono: "3000000003"
+                  activo: true
+                  creadoEn: 2026-10-29 00:15:10
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - Autenticación
+      summary: Editar mi perfil
+      description: |-
+        El usuario actualiza su nombre, apellido o teléfono. El correo y el rol no se cambian aquí.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: put__api_auth_perfil
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Perfil actualizado
+                datos:
+                  id: 3
+                  idRol: 3
+                  rol: Cliente
+                  nombre: Juan
+                  apellido: Cliente
+                  nombreCompleto: Juan Cliente
+                  correo: cliente@demo.com
+                  telefono: "3000000003"
+                  activo: true
+                  creadoEn: 2026-10-29 00:15:10
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                apellido:
+                  type: string
+                  description: Apellido
+                telefono:
+                  type: string
+                  description: Teléfono
+            example:
+              telefono: "3000000003"
+  /api/auth/contrasena:
+    put:
+      tags:
+        - Autenticación
+      summary: Cambiar mi contraseña
+      description: |-
+        Cambia la contraseña verificando primero la contraseña actual.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: put__api_auth_contrasena
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Contrasena actualizada
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores") | La contrasena actual no es correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+                caso2:
+                  summary: La contrasena actual no es correcta
+                  value:
+                    exito: false
+                    mensaje: La contrasena actual no es correcta
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contrasenaActual:
+                  type: string
+                  description: Contraseña actual
+                contrasenaNueva:
+                  type: string
+                  description: Mínimo 8 caracteres, letras y números
+              required:
+                - contrasenaActual
+                - contrasenaNueva
+            example:
+              contrasenaActual: Demo1234
+              contrasenaNueva: Demo1234
+  /api/usuarios/barberos:
+    get:
+      tags:
+        - Usuarios
+      summary: Listar barberos activos
+      description: |-
+        Lista los barberos activos (id y nombre) para elegir al agendar una cita.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: get__api_usuarios_barberos
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 2
+                    nombre: Carlos
+                    apellido: Barbero
+                    nombreCompleto: Carlos Barbero
+                  - id: 5
+                    nombre: Pedro
+                    apellido: Navaja
+                    nombreCompleto: Pedro Navaja
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+  /api/usuarios:
+    get:
+      tags:
+        - Usuarios
+      summary: Listar usuarios
+      description: |-
+        Lista los usuarios con filtros opcionales. Para cada usuario incluye el número de citas completadas y el total pagado (verificado).
+
+        **Acceso:** Administrador
+      operationId: get__api_usuarios
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 2
+                    idRol: 2
+                    rol: Barbero
+                    nombre: Carlos
+                    apellido: Barbero
+                    nombreCompleto: Carlos Barbero
+                    correo: barbero@demo.com
+                    telefono: "3000000002"
+                    activo: true
+                    creadoEn: 2026-10-29 00:15:10
+                    totalCitas: 0
+                    totalGastado: 0
+                  - id: 5
+                    idRol: 2
+                    rol: Barbero
+                    nombre: Pedro
+                    apellido: Navaja
+                    nombreCompleto: Pedro Navaja
+                    correo: pedro3013405@barberia.com
+                    telefono: "3019998877"
+                    activo: true
+                    creadoEn: 2026-10-29 00:16:54
+                    totalCitas: 0
+                    totalGastado: 0
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rol
+          in: query
+          required: false
+          description: Administrador, Barbero o Cliente
+          schema:
+            type: string
+        - name: activo
+          in: query
+          required: false
+          description: true / false
+          schema:
+            type: boolean
+        - name: buscar
+          in: query
+          required: false
+          description: Texto en nombre o correo
+          schema:
+            type: string
+    post:
+      tags:
+        - Usuarios
+      summary: Crear usuario
+      description: |-
+        El administrador crea cuentas de cualquier rol (por ejemplo, barberos).
+
+        **Acceso:** Administrador
+      operationId: post__api_usuarios
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Usuario creado
+                datos:
+                  id: 22
+                  idRol: 2
+                  rol: Barbero
+                  nombre: Pedro
+                  apellido: Navaja
+                  nombreCompleto: Pedro Navaja
+                  correo: pedro742037@barberia.com
+                  telefono: "3011112233"
+                  activo: true
+                  creadoEn: 2026-10-29 00:29:02
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "409":
+          description: Ya existe una cuenta con ese correo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Ya existe una cuenta con ese correo
+                  value:
+                    exito: false
+                    mensaje: Ya existe una cuenta con ese correo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                apellido:
+                  type: string
+                  description: Apellido
+                correo:
+                  type: string
+                  description: Correo único
+                contrasena:
+                  type: string
+                  description: Mínimo 8 caracteres, letras y números
+                rol:
+                  type: string
+                  description: Administrador, Barbero o Cliente
+                telefono:
+                  type: string
+                  description: Teléfono
+              required:
+                - nombre
+                - apellido
+                - correo
+                - contrasena
+                - rol
+            example:
+              nombre: Pedro
+              apellido: Navaja
+              correo: pedro742037@barberia.com
+              contrasena: Barbero123
+              rol: Barbero
+              telefono: "3011112233"
+  /api/usuarios/{id}:
+    get:
+      tags:
+        - Usuarios
+      summary: Consultar un usuario
+      description: |-
+        Devuelve un usuario por su id.
+
+        **Acceso:** Administrador
+      operationId: get__api_usuarios_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 2
+                  idRol: 2
+                  rol: Barbero
+                  nombre: Carlos
+                  apellido: Barbero
+                  nombreCompleto: Carlos Barbero
+                  correo: barbero@demo.com
+                  telefono: "3000000002"
+                  activo: true
+                  creadoEn: 2026-10-29 00:15:10
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Usuario no encontrado
+                  value:
+                    exito: false
+                    mensaje: Usuario no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del usuario
+          schema:
+            type: integer
+    put:
+      tags:
+        - Usuarios
+      summary: Actualizar usuario
+      description: |-
+        Actualiza nombre, apellido, teléfono o rol. Un administrador no puede quitarse a sí mismo el rol.
+
+        **Acceso:** Administrador
+      operationId: put__api_usuarios_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Usuario actualizado
+                datos:
+                  id: 22
+                  idRol: 2
+                  rol: Barbero
+                  nombre: Pedro
+                  apellido: Navaja
+                  nombreCompleto: Pedro Navaja
+                  correo: pedro742037@barberia.com
+                  telefono: "3019998877"
+                  activo: true
+                  creadoEn: 2026-10-29 00:29:02
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Usuario no encontrado
+                  value:
+                    exito: false
+                    mensaje: Usuario no encontrado
+        "409":
+          description: No puede quitarse a si mismo el rol de administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: No puede quitarse a si mismo el rol de administrador
+                  value:
+                    exito: false
+                    mensaje: No puede quitarse a si mismo el rol de administrador
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del usuario
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                apellido:
+                  type: string
+                  description: Apellido
+                telefono:
+                  type: string
+                  description: Teléfono
+                rol:
+                  type: string
+                  description: Nuevo rol
+            example:
+              telefono: "3019998877"
+  /api/usuarios/{id}/estado:
+    patch:
+      tags:
+        - Usuarios
+      summary: Activar o desactivar usuario
+      description: |-
+        Los usuarios no se borran: se desactivan. Un usuario inactivo no puede iniciar sesión y su token deja de funcionar de inmediato.
+
+        **Acceso:** Administrador
+      operationId: patch__api_usuarios_id_estado
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Usuario activado
+                datos:
+                  id: 22
+                  idRol: 2
+                  rol: Barbero
+                  nombre: Pedro
+                  apellido: Navaja
+                  nombreCompleto: Pedro Navaja
+                  correo: pedro742037@barberia.com
+                  telefono: "3019998877"
+                  activo: true
+                  creadoEn: 2026-10-29 00:29:02
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Usuario no encontrado
+                  value:
+                    exito: false
+                    mensaje: Usuario no encontrado
+        "409":
+          description: No puede desactivar su propia cuenta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: No puede desactivar su propia cuenta
+                  value:
+                    exito: false
+                    mensaje: No puede desactivar su propia cuenta
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del usuario
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo:
+                  type: boolean
+                  description: true = activar, false = desactivar
+              required:
+                - activo
+            example:
+              activo: true
+  /api/servicios:
+    get:
+      tags:
+        - Servicios
+      summary: Listar servicios
+      description: |-
+        Catálogo de servicios activos. Con todos=true (solo administrador) incluye los desactivados.
+
+        **Acceso:** Público (sin token); ?todos=true solo Administrador
+      operationId: get__api_servicios
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 8
+                    nombre: Afeitado Clasico 3013405
+                    descripcion: Afeitado con navaja y toalla caliente
+                    precio: 24000
+                    duracionMin: 30
+                    categoria: Barba
+                    activo: true
+                  - id: 9
+                    nombre: Afeitado Clasico 3031989
+                    descripcion: Afeitado con navaja y toalla caliente
+                    precio: 24000
+                    duracionMin: 30
+                    categoria: Barba
+                    activo: true
+        "403":
+          description: Solo el administrador puede ver los servicios desactivados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Solo el administrador puede ver los servicios desactivados
+                  value:
+                    exito: false
+                    mensaje: Solo el administrador puede ver los servicios desactivados
+      parameters:
+        - name: todos
+          in: query
+          required: false
+          description: Incluir desactivados (solo administrador)
+          schema:
+            type: boolean
+    post:
+      tags:
+        - Servicios
+      summary: Crear servicio
+      description: |-
+        Agrega un servicio al catálogo.
+
+        **Acceso:** Administrador
+      operationId: post__api_servicios
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Servicio creado
+                datos:
+                  id: 10
+                  nombre: Afeitado Clásico 742037
+                  descripcion: Afeitado con navaja
+                  precio: 22000
+                  duracionMin: 30
+                  categoria: Barba
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre (máx. 100)
+                precio:
+                  type: number
+                  description: Precio en pesos (≥ 0)
+                duracionMin:
+                  type: integer
+                  description: Duración en minutos (5 a 480)
+                categoria:
+                  type: string
+                  description: Categoría (ej. Corte, Barba)
+                descripcion:
+                  type: string
+                  description: Descripción
+              required:
+                - nombre
+                - precio
+                - duracionMin
+            example:
+              nombre: Afeitado Clásico 742037
+              descripcion: Afeitado con navaja
+              precio: 22000
+              duracionMin: 30
+              categoria: Barba
+  /api/servicios/{id}:
+    get:
+      tags:
+        - Servicios
+      summary: Consultar un servicio
+      description: |-
+        Devuelve un servicio activo por su id.
+
+        **Acceso:** Público (sin token)
+      operationId: get__api_servicios_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 8
+                  nombre: Afeitado Clasico 3013405
+                  descripcion: Afeitado con navaja y toalla caliente
+                  precio: 24000
+                  duracionMin: 30
+                  categoria: Barba
+                  activo: true
+        "404":
+          description: Servicio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Servicio no encontrado
+                  value:
+                    exito: false
+                    mensaje: Servicio no encontrado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del servicio
+          schema:
+            type: integer
+    put:
+      tags:
+        - Servicios
+      summary: Actualizar servicio
+      description: |-
+        Reemplaza los datos del servicio. El precio nuevo no cambia el precio de las citas ya agendadas (se guarda el precio aplicado en cita_servicio).
+
+        **Acceso:** Administrador
+      operationId: put__api_servicios_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Servicio actualizado
+                datos:
+                  id: 10
+                  nombre: Afeitado Clásico 742037
+                  descripcion: Afeitado con navaja y toalla caliente
+                  precio: 24000
+                  duracionMin: 30
+                  categoria: Barba
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Servicio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Servicio no encontrado
+                  value:
+                    exito: false
+                    mensaje: Servicio no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del servicio
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                precio:
+                  type: number
+                  description: Precio
+                duracionMin:
+                  type: integer
+                  description: Duración en minutos
+                categoria:
+                  type: string
+                  description: Categoría
+                descripcion:
+                  type: string
+                  description: Descripción
+              required:
+                - nombre
+                - precio
+                - duracionMin
+            example:
+              nombre: Afeitado Clásico 742037
+              descripcion: Afeitado con navaja y toalla caliente
+              precio: 24000
+              duracionMin: 30
+              categoria: Barba
+  /api/servicios/{id}/estado:
+    patch:
+      tags:
+        - Servicios
+      summary: Activar o desactivar servicio
+      description: |-
+        Los servicios no se borran (las citas antiguas los usan): se desactivan y dejan de ofrecerse.
+
+        **Acceso:** Administrador
+      operationId: patch__api_servicios_id_estado
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Servicio activado
+                datos:
+                  id: 10
+                  nombre: Afeitado Clásico 742037
+                  descripcion: Afeitado con navaja y toalla caliente
+                  precio: 24000
+                  duracionMin: 30
+                  categoria: Barba
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Servicio no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Servicio no encontrado
+                  value:
+                    exito: false
+                    mensaje: Servicio no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del servicio
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo:
+                  type: boolean
+                  description: true / false
+              required:
+                - activo
+            example:
+              activo: true
+  /api/horarios/barbero/{idBarbero}:
+    get:
+      tags:
+        - Horarios
+      summary: Ver horario semanal de un barbero
+      description: |-
+        Franjas de atención por día de la semana (1 = lunes ... 7 = domingo).
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: get__api_horarios_barbero_idBarbero_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 26
+                    idBarbero: 2
+                    diaSemana: 1
+                    nombreDia: Lunes
+                    horaInicio: 09:00
+                    horaFin: 18:00
+                  - id: 27
+                    idBarbero: 2
+                    diaSemana: 2
+                    nombreDia: Martes
+                    horaInicio: 09:00
+                    horaFin: 18:00
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Barbero no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Barbero no encontrado
+                  value:
+                    exito: false
+                    mensaje: Barbero no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idBarbero
+          in: path
+          required: true
+          description: Id del barbero
+          schema:
+            type: integer
+    put:
+      tags:
+        - Horarios
+      summary: Definir horario semanal
+      description: |-
+        Reemplaza todo el horario del barbero. Valida que la hora de fin sea posterior al inicio y que las franjas de un mismo día no se crucen. Una lista vacía deja al barbero sin horario.
+
+        **Acceso:** Barbero (el suyo) o Administrador
+      operationId: put__api_horarios_barbero_idBarbero_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Horario actualizado
+                datos:
+                  - id: 32
+                    idBarbero: 2
+                    diaSemana: 1
+                    nombreDia: Lunes
+                    horaInicio: 09:00
+                    horaFin: 18:00
+                  - id: 33
+                    idBarbero: 2
+                    diaSemana: 2
+                    nombreDia: Martes
+                    horaInicio: 09:00
+                    horaFin: 18:00
+        "400":
+          description: Horario invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Horario invalido
+                  value:
+                    exito: false
+                    mensaje: Horario invalido
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Solo puede modificar su propio horario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Solo puede modificar su propio horario
+                  value:
+                    exito: false
+                    mensaje: Solo puede modificar su propio horario
+        "404":
+          description: Barbero no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Barbero no encontrado
+                  value:
+                    exito: false
+                    mensaje: Barbero no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idBarbero
+          in: path
+          required: true
+          description: Id del barbero
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                horarios:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      diaSemana:
+                        type: integer
+                        minimum: 1
+                        maximum: 7
+                      horaInicio:
+                        type: string
+                        example: 09:00
+                      horaFin:
+                        type: string
+                        example: 18:00
+                  description: Lista de franjas { diaSemana (1-7), horaInicio "HH:MM", horaFin "HH:MM" }
+              required:
+                - horarios
+            example:
+              horarios:
+                - diaSemana: 1
+                  horaInicio: 09:00
+                  horaFin: 18:00
+                - diaSemana: 2
+                  horaInicio: 09:00
+                  horaFin: 18:00
+                - diaSemana: 3
+                  horaInicio: 09:00
+                  horaFin: 18:00
+                - diaSemana: 4
+                  horaInicio: 09:00
+                  horaFin: 18:00
+                - diaSemana: 5
+                  horaInicio: 09:00
+                  horaFin: 18:00
+                - diaSemana: 6
+                  horaInicio: 09:00
+                  horaFin: 18:00
+  /api/citas/disponibilidad:
+    get:
+      tags:
+        - Citas
+      summary: Consultar horas disponibles
+      description: |-
+        Horas libres de un barbero en una fecha para la duración del servicio, cada 30 minutos, según su horario y sus citas pendientes o confirmadas.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: get__api_citas_disponibilidad
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  idBarbero: 2
+                  fecha: 2027-03-08
+                  idServicio: 8
+                  duracionMin: 30
+                  atiende: true
+                  horas:
+                    - 09:00
+                    - 09:30
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Barbero no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Barbero no encontrado
+                  value:
+                    exito: false
+                    mensaje: Barbero no encontrado
+        "409":
+          description: El servicio no esta disponible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: El servicio no esta disponible
+                  value:
+                    exito: false
+                    mensaje: El servicio no esta disponible
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idBarbero
+          in: query
+          required: true
+          description: Id del barbero
+          schema:
+            type: integer
+        - name: fecha
+          in: query
+          required: true
+          description: AAAA-MM-DD
+          schema:
+            type: string
+        - name: idServicio
+          in: query
+          required: true
+          description: Id del servicio
+          schema:
+            type: integer
+  /api/citas:
+    post:
+      tags:
+        - Citas
+      summary: Agendar cita
+      description: |-
+        Agenda una cita en estado "pendiente". Valida: fecha futura, que el barbero atienda ese día y la cita quepa en su horario, y que ni el barbero ni el cliente tengan otra cita que se cruce (con bloqueo para reservas simultáneas). Guarda el precio aplicado. Si no se confirma a tiempo (60 min por defecto) se cancela sola. Notifica al cliente, al barbero y al administrador.
+
+        **Acceso:** Cliente (a su nombre) o Administrador (indica idCliente)
+      operationId: post__api_citas
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Cita agendada. Queda pendiente de confirmacion
+                datos:
+                  id: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  correoCliente: cliente@demo.com
+                  telefonoCliente: "3000000003"
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  idServicio: 8
+                  nombreServicio: Afeitado Clasico 3013405
+                  duracionMin: 30
+                  precio: 24000
+                  fechaHora: 2027-03-08 10:00:00
+                  fecha: 2027-03-08
+                  hora: 10:00
+                  estado: pendiente
+                  expiraEn: 2026-10-29 01:29:03
+                  notas: Corte bajito a los lados
+                  estadoPago: null
+                  metodoPago: null
+                  creadoEn: 2026-10-29 00:29:03
+        "400":
+          description: La fecha y hora de la cita deben ser futuras
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: La fecha y hora de la cita deben ser futuras
+                  value:
+                    exito: false
+                    mensaje: La fecha y hora de la cita deben ser futuras
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Los barberos no agendan citas; las agenda el cliente o el administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Los barberos no agendan citas; las agenda el cliente o el administrador
+                  value:
+                    exito: false
+                    mensaje: Los barberos no agendan citas; las agenda el cliente o el administrador
+        "404":
+          description: Barbero no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Barbero no encontrado
+                  value:
+                    exito: false
+                    mensaje: Barbero no encontrado
+        "409":
+          description: El barbero ya tiene una cita en ese horario | El cliente ya tiene otra cita en ese horario | El barbero no atiende en ese horario. Consulte la disponibilidad
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: El barbero ya tiene una cita en ese horario
+                  value:
+                    exito: false
+                    mensaje: El barbero ya tiene una cita en ese horario
+                caso2:
+                  summary: El cliente ya tiene otra cita en ese horario
+                  value:
+                    exito: false
+                    mensaje: El cliente ya tiene otra cita en ese horario
+                caso3:
+                  summary: El barbero no atiende en ese horario. Consulte la disponibilidad
+                  value:
+                    exito: false
+                    mensaje: El barbero no atiende en ese horario. Consulte la disponibilidad
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idBarbero:
+                  type: integer
+                  description: Id del barbero
+                idServicio:
+                  type: integer
+                  description: Id del servicio
+                fechaHora:
+                  type: string
+                  description: AAAA-MM-DDTHH:MM
+                notas:
+                  type: string
+                  description: Notas para el barbero (máx. 500)
+                idCliente:
+                  type: integer
+                  description: "Solo administrador: cliente de la cita"
+              required:
+                - idBarbero
+                - idServicio
+                - fechaHora
+            example:
+              idBarbero: 2
+              idServicio: 8
+              fechaHora: 2027-03-08T10:00
+              notas: Corte bajito a los lados
+    get:
+      tags:
+        - Citas
+      summary: Listar citas
+      description: |-
+        El cliente ve sus citas, el barbero las suyas y el administrador todas. Incluye nombres, precio y estado del pago.
+
+        **Acceso:** Cualquier usuario con sesión (cada rol ve solo lo suyo)
+      operationId: get__api_citas
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 11
+                    idCliente: 3
+                    nombreCliente: Juan Cliente
+                    correoCliente: cliente@demo.com
+                    telefonoCliente: "3000000003"
+                    idBarbero: 2
+                    nombreBarbero: Carlos Barbero
+                    idServicio: 8
+                    nombreServicio: Afeitado Clasico 3013405
+                    duracionMin: 30
+                    precio: 24000
+                    fechaHora: 2027-03-08 10:00:00
+                    fecha: 2027-03-08
+                    hora: 10:00
+                    estado: pendiente
+                    expiraEn: 2026-10-29 01:29:03
+                    notas: Corte bajito a los lados
+                    estadoPago: null
+                    metodoPago: null
+                    creadoEn: 2026-10-29 00:29:03
+                  - id: 6
+                    idCliente: 3
+                    nombreCliente: Juan Cliente
+                    correoCliente: cliente@demo.com
+                    telefonoCliente: "3000000003"
+                    idBarbero: 2
+                    nombreBarbero: Carlos Barbero
+                    idServicio: 8
+                    nombreServicio: Afeitado Clasico 3013405
+                    duracionMin: 30
+                    precio: 24000
+                    fechaHora: 2027-01-19 16:00:00
+                    fecha: 2027-01-19
+                    hora: 16:00
+                    estado: pendiente
+                    expiraEn: 2026-10-29 01:17:13
+                    notas: null
+                    estadoPago: verificado
+                    metodoPago: transferencia
+                    creadoEn: 2026-10-29 00:17:13
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: pendiente, confirmada, cancelada o completada
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: false
+          description: AAAA-MM-DD
+          schema:
+            type: string
+        - name: hasta
+          in: query
+          required: false
+          description: AAAA-MM-DD
+          schema:
+            type: string
+        - name: idBarbero
+          in: query
+          required: false
+          description: Solo administrador
+          schema:
+            type: integer
+        - name: idCliente
+          in: query
+          required: false
+          description: Solo administrador
+          schema:
+            type: integer
+  /api/citas/{id}:
+    get:
+      tags:
+        - Citas
+      summary: Consultar una cita
+      description: |-
+        Devuelve una cita. Si pertenece a otra persona responde 404 (no revela que existe).
+
+        **Acceso:** Dueño de la cita, su barbero o Administrador
+      operationId: get__api_citas_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  correoCliente: cliente@demo.com
+                  telefonoCliente: "3000000003"
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  idServicio: 8
+                  nombreServicio: Afeitado Clasico 3013405
+                  duracionMin: 30
+                  precio: 24000
+                  fechaHora: 2027-03-08 10:00:00
+                  fecha: 2027-03-08
+                  hora: 10:00
+                  estado: pendiente
+                  expiraEn: 2026-10-29 01:29:03
+                  notas: Corte bajito a los lados
+                  estadoPago: null
+                  metodoPago: null
+                  creadoEn: 2026-10-29 00:29:03
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Cita no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Cita no encontrada
+                  value:
+                    exito: false
+                    mensaje: Cita no encontrada
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la cita
+          schema:
+            type: integer
+    put:
+      tags:
+        - Citas
+      summary: Reprogramar cita
+      description: |-
+        Cambia la fecha y hora (y opcionalmente el barbero o el servicio) de una cita pendiente o confirmada, con las mismas validaciones de agenda. No cambia el estado.
+
+        **Acceso:** Cliente (sus citas) o Administrador
+      operationId: put__api_citas_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Cita reprogramada
+                datos:
+                  id: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  correoCliente: cliente@demo.com
+                  telefonoCliente: "3000000003"
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  idServicio: 8
+                  nombreServicio: Afeitado Clasico 3013405
+                  duracionMin: 30
+                  precio: 24000
+                  fechaHora: 2027-03-08 11:00:00
+                  fecha: 2027-03-08
+                  hora: 11:00
+                  estado: pendiente
+                  expiraEn: 2026-10-29 01:29:03
+                  notas: Corte bajito a los lados
+                  estadoPago: null
+                  metodoPago: null
+                  creadoEn: 2026-10-29 00:29:03
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Los barberos no reprograman citas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Los barberos no reprograman citas
+                  value:
+                    exito: false
+                    mensaje: Los barberos no reprograman citas
+        "404":
+          description: Cita no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Cita no encontrada
+                  value:
+                    exito: false
+                    mensaje: Cita no encontrada
+        "409":
+          description: No se puede reprogramar una cita completada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: No se puede reprogramar una cita completada
+                  value:
+                    exito: false
+                    mensaje: No se puede reprogramar una cita completada
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la cita
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fechaHora:
+                  type: string
+                  description: AAAA-MM-DDTHH:MM
+                idBarbero:
+                  type: integer
+                  description: Otro barbero
+                idServicio:
+                  type: integer
+                  description: Otro servicio
+              required:
+                - fechaHora
+            example:
+              fechaHora: 2027-03-08T11:00
+  /api/citas/{id}/estado:
+    patch:
+      tags:
+        - Citas
+      summary: Confirmar, completar o cancelar cita
+      description: |-
+        Transiciones permitidas: pendiente → confirmada o cancelada; confirmada → completada o cancelada. Las citas canceladas o completadas no cambian. Notifica a los involucrados (la cancelación también al administrador, RF05).
+
+        **Acceso:** Barbero/Administrador (confirmar y completar); los tres roles pueden cancelar lo suyo
+      operationId: patch__api_citas_id_estado
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Cita confirmada
+                datos:
+                  id: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  correoCliente: cliente@demo.com
+                  telefonoCliente: "3000000003"
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  idServicio: 8
+                  nombreServicio: Afeitado Clasico 3013405
+                  duracionMin: 30
+                  precio: 24000
+                  fechaHora: 2027-03-08 11:00:00
+                  fecha: 2027-03-08
+                  hora: 11:00
+                  estado: confirmada
+                  expiraEn: null
+                  notas: Corte bajito a los lados
+                  estadoPago: null
+                  metodoPago: null
+                  creadoEn: 2026-10-29 00:29:03
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: El cliente solo puede cancelar sus citas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: El cliente solo puede cancelar sus citas
+                  value:
+                    exito: false
+                    mensaje: El cliente solo puede cancelar sus citas
+        "404":
+          description: Cita no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Cita no encontrada
+                  value:
+                    exito: false
+                    mensaje: Cita no encontrada
+        "409":
+          description: No se puede pasar una cita de "completada" a "cancelada"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: No se puede pasar una cita de "completada" a "cancelada"
+                  value:
+                    exito: false
+                    mensaje: No se puede pasar una cita de "completada" a "cancelada"
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la cita
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  description: confirmada, cancelada o completada
+              required:
+                - estado
+            example:
+              estado: confirmada
+  /api/pagos:
+    post:
+      tags:
+        - Pagos
+      summary: Registrar pago de una cita
+      description: |-
+        Efectivo: se registra pendiente y se paga en la barbería. Transferencia: se envía como multipart/form-data con la imagen del comprobante (JPG, PNG o WEBP, máx. 5 MB). El monto es el precio aplicado de la cita. Notifica al administrador.
+
+        **Acceso:** Cliente (sus citas) o Administrador
+      operationId: post__api_pagos
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Pago en efectivo registrado. Se paga presencialmente en la barberia
+                datos:
+                  id: 7
+                  idCita: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  nombreServicio: Afeitado Clasico 3013405
+                  fechaCita: 2027-03-08 11:00:00
+                  estadoCita: confirmada
+                  monto: 24000
+                  metodoPago: efectivo
+                  tieneComprobante: false
+                  urlComprobante: null
+                  estadoPago: pendiente
+                  registradoEn: 2026-10-29 00:29:03
+        "400":
+          description: Para transferencia debe adjuntar la imagen del comprobante (campo "comprobante") | El comprobante debe ser una imagen JPG, PNG o WEBP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Para transferencia debe adjuntar la imagen del comprobante (campo "comprobante")
+                  value:
+                    exito: false
+                    mensaje: Para transferencia debe adjuntar la imagen del comprobante (campo "comprobante")
+                caso2:
+                  summary: El comprobante debe ser una imagen JPG, PNG o WEBP
+                  value:
+                    exito: false
+                    mensaje: El comprobante debe ser una imagen JPG, PNG o WEBP
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Los barberos no registran pagos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Los barberos no registran pagos
+                  value:
+                    exito: false
+                    mensaje: Los barberos no registran pagos
+        "404":
+          description: Cita no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Cita no encontrada
+                  value:
+                    exito: false
+                    mensaje: Cita no encontrada
+        "409":
+          description: Esta cita ya tiene un pago registrado | No se puede pagar una cita cancelada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Esta cita ya tiene un pago registrado
+                  value:
+                    exito: false
+                    mensaje: Esta cita ya tiene un pago registrado
+                caso2:
+                  summary: No se puede pagar una cita cancelada
+                  value:
+                    exito: false
+                    mensaje: No se puede pagar una cita cancelada
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idCita: &a1
+                  type: integer
+                  description: Id de la cita
+                metodoPago: &a2
+                  type: string
+                  description: efectivo o transferencia
+              required: &a3
+                - idCita
+                - metodoPago
+            example:
+              idCita: 11
+              metodoPago: efectivo
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                idCita: *a1
+                metodoPago: *a2
+                comprobante:
+                  type: string
+                  format: binary
+                  description: Imagen del comprobante (solo transferencia)
+              required: *a3
+    get:
+      tags:
+        - Pagos
+      summary: Listar pagos
+      description: |-
+        El cliente ve sus pagos, el barbero los de sus citas y el administrador todos.
+
+        **Acceso:** Cualquier usuario con sesión (cada rol ve solo lo suyo)
+      operationId: get__api_pagos
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 7
+                    idCita: 11
+                    idCliente: 3
+                    nombreCliente: Juan Cliente
+                    idBarbero: 2
+                    nombreBarbero: Carlos Barbero
+                    nombreServicio: Afeitado Clasico 3013405
+                    fechaCita: 2027-03-08 11:00:00
+                    estadoCita: confirmada
+                    monto: 24000
+                    metodoPago: efectivo
+                    tieneComprobante: false
+                    urlComprobante: null
+                    estadoPago: pendiente
+                    registradoEn: 2026-10-29 00:29:03
+                  - id: 4
+                    idCita: 6
+                    idCliente: 3
+                    nombreCliente: Juan Cliente
+                    idBarbero: 2
+                    nombreBarbero: Carlos Barbero
+                    nombreServicio: Afeitado Clasico 3013405
+                    fechaCita: 2027-01-19 16:00:00
+                    estadoCita: pendiente
+                    monto: 24000
+                    metodoPago: transferencia
+                    tieneComprobante: true
+                    urlComprobante: /api/pagos/4/comprobante
+                    estadoPago: verificado
+                    registradoEn: 2026-10-29 00:17:13
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: pendiente, verificado o rechazado
+          schema:
+            type: string
+  /api/pagos/{id}:
+    get:
+      tags:
+        - Pagos
+      summary: Consultar un pago
+      description: |-
+        Devuelve un pago.
+
+        **Acceso:** Dueño, su barbero o Administrador
+      operationId: get__api_pagos_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 7
+                  idCita: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  nombreServicio: Afeitado Clasico 3013405
+                  fechaCita: 2027-03-08 11:00:00
+                  estadoCita: confirmada
+                  monto: 24000
+                  metodoPago: efectivo
+                  tieneComprobante: false
+                  urlComprobante: null
+                  estadoPago: pendiente
+                  registradoEn: 2026-10-29 00:29:03
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Pago no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Pago no encontrado
+                  value:
+                    exito: false
+                    mensaje: Pago no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del pago
+          schema:
+            type: integer
+  /api/pagos/{id}/comprobante:
+    get:
+      tags:
+        - Pagos
+      summary: Descargar comprobante
+      description: |-
+        Devuelve la imagen del comprobante. Los comprobantes no son archivos públicos: solo se descargan con un token autorizado.
+
+        **Acceso:** Dueño, su barbero o Administrador
+      operationId: get__api_pagos_id_comprobante
+      responses:
+        "200":
+          description: Imagen del comprobante
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Comprobante no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Comprobante no encontrado
+                  value:
+                    exito: false
+                    mensaje: Comprobante no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del pago
+          schema:
+            type: integer
+  /api/pagos/{id}/estado:
+    patch:
+      tags:
+        - Pagos
+      summary: Verificar o rechazar pago
+      description: |-
+        El administrador revisa el pago (o el comprobante) y lo marca verificado o rechazado. Solo cuentan como ingresos los pagos verificados. Notifica al cliente.
+
+        **Acceso:** Administrador
+      operationId: patch__api_pagos_id_estado
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Pago verificado
+                datos:
+                  id: 7
+                  idCita: 11
+                  idCliente: 3
+                  nombreCliente: Juan Cliente
+                  idBarbero: 2
+                  nombreBarbero: Carlos Barbero
+                  nombreServicio: Afeitado Clasico 3013405
+                  fechaCita: 2027-03-08 11:00:00
+                  estadoCita: confirmada
+                  monto: 24000
+                  metodoPago: efectivo
+                  tieneComprobante: false
+                  urlComprobante: null
+                  estadoPago: verificado
+                  registradoEn: 2026-10-29 00:29:03
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Pago no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Pago no encontrado
+                  value:
+                    exito: false
+                    mensaje: Pago no encontrado
+        "409":
+          description: El pago ya fue verificado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: El pago ya fue verificado
+                  value:
+                    exito: false
+                    mensaje: El pago ya fue verificado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del pago
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                estadoPago:
+                  type: string
+                  description: verificado o rechazado
+              required:
+                - estadoPago
+            example:
+              estadoPago: verificado
+  /api/productos:
+    get:
+      tags:
+        - Inventario
+      summary: Listar productos
+      description: |-
+        Productos del inventario con su stock y alerta de stock bajo.
+
+        **Acceso:** Administrador
+      operationId: get__api_productos
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 8
+                    nombre: Cera Mate 3013405
+                    descripcion: null
+                    categoria: Styling
+                    unidad: unidad
+                    precio: 32000
+                    stock: 3
+                    stockMinimo: 4
+                    stockBajo: true
+                    activo: true
+                  - id: 9
+                    nombre: Cera Mate 3031989
+                    descripcion: null
+                    categoria: Styling
+                    unidad: unidad
+                    precio: 32000
+                    stock: 3
+                    stockMinimo: 4
+                    stockBajo: true
+                    activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: activos
+          in: query
+          required: false
+          description: Solo activos
+          schema:
+            type: boolean
+        - name: stockBajo
+          in: query
+          required: false
+          description: Solo bajo el mínimo
+          schema:
+            type: boolean
+    post:
+      tags:
+        - Inventario
+      summary: Crear producto
+      description: |-
+        Agrega un producto. Si trae stock inicial, queda registrado como primera entrada en el historial.
+
+        **Acceso:** Administrador
+      operationId: post__api_productos
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Producto creado
+                datos:
+                  id: 10
+                  nombre: Cera Mate 742037
+                  descripcion: null
+                  categoria: Styling
+                  unidad: unidad
+                  precio: 32000
+                  stock: 10
+                  stockMinimo: 4
+                  stockBajo: false
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                precio:
+                  type: number
+                  description: Precio de venta
+                categoria:
+                  type: string
+                  description: Categoría
+                unidad:
+                  type: string
+                  description: unidad, frasco, caja...
+                stock:
+                  type: integer
+                  description: Stock inicial
+                stockMinimo:
+                  type: integer
+                  description: Mínimo antes de alertar (por defecto 5)
+                costoUnitario:
+                  type: number
+                  description: Costo de compra del stock inicial
+                descripcion:
+                  type: string
+                  description: Descripción
+              required:
+                - nombre
+                - precio
+            example:
+              nombre: Cera Mate 742037
+              categoria: Styling
+              unidad: unidad
+              precio: 32000
+              stock: 10
+              stockMinimo: 4
+              costoUnitario: 18000
+  /api/productos/{id}:
+    get:
+      tags:
+        - Inventario
+      summary: Consultar producto
+      description: |-
+        Devuelve un producto.
+
+        **Acceso:** Administrador
+      operationId: get__api_productos_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  id: 10
+                  nombre: Cera Mate 742037
+                  descripcion: null
+                  categoria: Styling
+                  unidad: unidad
+                  precio: 32000
+                  stock: 10
+                  stockMinimo: 4
+                  stockBajo: false
+                  activo: true
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Producto no encontrado
+                  value:
+                    exito: false
+                    mensaje: Producto no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del producto
+          schema:
+            type: integer
+    put:
+      tags:
+        - Inventario
+      summary: Actualizar producto
+      description: |-
+        Actualiza los datos descriptivos. El stock NO se cambia aquí: solo con movimientos, para conservar el historial.
+
+        **Acceso:** Administrador
+      operationId: put__api_productos_id_
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Producto actualizado
+                datos:
+                  id: 10
+                  nombre: Cera Mate 742037
+                  descripcion: null
+                  categoria: Styling
+                  unidad: unidad
+                  precio: 33000
+                  stock: 10
+                  stockMinimo: 4
+                  stockBajo: false
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Producto no encontrado
+                  value:
+                    exito: false
+                    mensaje: Producto no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del producto
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                  description: Nombre
+                precio:
+                  type: number
+                  description: Precio
+                categoria:
+                  type: string
+                  description: Categoría
+                unidad:
+                  type: string
+                  description: Unidad
+                stockMinimo:
+                  type: integer
+                  description: Stock mínimo
+                descripcion:
+                  type: string
+                  description: Descripción
+              required:
+                - nombre
+                - precio
+            example:
+              nombre: Cera Mate 742037
+              categoria: Styling
+              unidad: unidad
+              precio: 33000
+              stockMinimo: 4
+  /api/productos/{id}/estado:
+    patch:
+      tags:
+        - Inventario
+      summary: Activar o desactivar producto
+      description: |-
+        Desactiva un producto sin borrar su historial.
+
+        **Acceso:** Administrador
+      operationId: patch__api_productos_id_estado
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Producto activado
+                datos:
+                  id: 10
+                  nombre: Cera Mate 742037
+                  descripcion: null
+                  categoria: Styling
+                  unidad: unidad
+                  precio: 33000
+                  stock: 10
+                  stockMinimo: 4
+                  stockBajo: false
+                  activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Producto no encontrado
+                  value:
+                    exito: false
+                    mensaje: Producto no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del producto
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo:
+                  type: boolean
+                  description: true / false
+              required:
+                - activo
+            example:
+              activo: true
+  /api/productos/{id}/movimientos:
+    post:
+      tags:
+        - Inventario
+      summary: Registrar entrada o salida
+      description: |-
+        Registra un movimiento (RF11) y actualiza el stock en la misma transacción, con bloqueo de la fila. Una salida nunca deja el stock negativo. Si una salida deja el producto bajo el mínimo, avisa al administrador. Las entradas con costo cuentan como egresos en el resumen mensual.
+
+        **Acceso:** Administrador
+      operationId: post__api_productos_id_movimientos
+      responses:
+        "201":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: "Entrada registrada. Stock: 10 -> 15"
+                datos:
+                  idMovimiento: 10
+                  stockAnterior: 10
+                  stockNuevo: 15
+                  producto:
+                    id: 10
+                    nombre: Cera Mate 742037
+                    descripcion: null
+                    categoria: Styling
+                    unidad: unidad
+                    precio: 33000
+                    stock: 15
+                    stockMinimo: 4
+                    stockBajo: false
+                    activo: true
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Producto no encontrado
+                  value:
+                    exito: false
+                    mensaje: Producto no encontrado
+        "409":
+          description: "Stock insuficiente: hay 2 y se intenta sacar 50 | El producto esta desactivado"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: "Stock insuficiente: hay 2 y se intenta sacar 50"
+                  value:
+                    exito: false
+                    mensaje: "Stock insuficiente: hay 2 y se intenta sacar 50"
+                caso2:
+                  summary: El producto esta desactivado
+                  value:
+                    exito: false
+                    mensaje: El producto esta desactivado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del producto
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  description: entrada o salida
+                cantidad:
+                  type: integer
+                  description: Cantidad (≥ 1)
+                costoUnitario:
+                  type: number
+                  description: Costo de compra (entradas)
+                motivo:
+                  type: string
+                  description: Motivo
+              required:
+                - tipo
+                - cantidad
+            example:
+              tipo: entrada
+              cantidad: 5
+              costoUnitario: 18000
+              motivo: Compra a proveedor
+    get:
+      tags:
+        - Inventario
+      summary: Historial de un producto
+      description: |-
+        Entradas y salidas de un producto, de la más reciente a la más antigua.
+
+        **Acceso:** Administrador
+      operationId: get__api_productos_id_movimientos
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 10
+                    idProducto: 10
+                    nombreProducto: Cera Mate 742037
+                    tipo: entrada
+                    cantidad: 5
+                    costoUnitario: 18000
+                    motivo: Compra a proveedor
+                    idUsuario: 1
+                    nombreUsuario: Admin Demo
+                    creadoEn: 2026-10-29 00:29:03
+                  - id: 9
+                    idProducto: 10
+                    nombreProducto: Cera Mate 742037
+                    tipo: entrada
+                    cantidad: 10
+                    costoUnitario: 18000
+                    motivo: Stock inicial
+                    idUsuario: 1
+                    nombreUsuario: Admin Demo
+                    creadoEn: 2026-10-29 00:29:03
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+        "404":
+          description: Producto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Producto no encontrado
+                  value:
+                    exito: false
+                    mensaje: Producto no encontrado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id del producto
+          schema:
+            type: integer
+  /api/productos/movimientos:
+    get:
+      tags:
+        - Inventario
+      summary: Historial general de movimientos
+      description: |-
+        Todos los movimientos con filtros opcionales.
+
+        **Acceso:** Administrador
+      operationId: get__api_productos_movimientos
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  - id: 10
+                    idProducto: 10
+                    nombreProducto: Cera Mate 742037
+                    tipo: entrada
+                    cantidad: 5
+                    costoUnitario: 18000
+                    motivo: Compra a proveedor
+                    idUsuario: 1
+                    nombreUsuario: Admin Demo
+                    creadoEn: 2026-10-29 00:29:03
+                  - id: 9
+                    idProducto: 10
+                    nombreProducto: Cera Mate 742037
+                    tipo: entrada
+                    cantidad: 10
+                    costoUnitario: 18000
+                    motivo: Stock inicial
+                    idUsuario: 1
+                    nombreUsuario: Admin Demo
+                    creadoEn: 2026-10-29 00:29:03
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idProducto
+          in: query
+          required: false
+          description: Id del producto
+          schema:
+            type: integer
+        - name: desde
+          in: query
+          required: false
+          description: AAAA-MM-DD
+          schema:
+            type: string
+        - name: hasta
+          in: query
+          required: false
+          description: AAAA-MM-DD
+          schema:
+            type: string
+  /api/notificaciones:
+    get:
+      tags:
+        - Notificaciones
+      summary: Mis notificaciones
+      description: |-
+        Notificaciones del usuario (las crea el sistema al agendar, confirmar, cancelar, pagar o con stock bajo) y el número de no leídas.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: get__api_notificaciones
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  noLeidas: 9
+                  notificaciones:
+                    - id: 68
+                      tipo: pago
+                      mensaje: "Pago registrado (efectivo) por $24.000 para la cita #11 de Juan Cliente. Pendiente de verificacion."
+                      leida: false
+                      creadoEn: 2026-10-29 00:29:03
+                    - id: 64
+                      tipo: cita
+                      mensaje: "Nueva cita agendada por Juan Cliente: Afeitado Clasico 3013405 con Carlos Barbero el 2027-03-08 a las 10:00."
+                      leida: false
+                      creadoEn: 2026-10-29 00:29:03
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: noLeidas
+          in: query
+          required: false
+          description: Solo las no leídas
+          schema:
+            type: boolean
+  /api/notificaciones/{id}/leida:
+    patch:
+      tags:
+        - Notificaciones
+      summary: Marcar una como leída
+      description: |-
+        Marca una notificación propia como leída. La de otro usuario responde 404.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: patch__api_notificaciones_id_leida
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: Notificacion marcada como leida
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "404":
+          description: Notificacion no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Notificacion no encontrada
+                  value:
+                    exito: false
+                    mensaje: Notificacion no encontrada
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Id de la notificación
+          schema:
+            type: integer
+  /api/notificaciones/leidas:
+    patch:
+      tags:
+        - Notificaciones
+      summary: Marcar todas como leídas
+      description: |-
+        Marca como leídas todas las notificaciones del usuario.
+
+        **Acceso:** Cualquier usuario con sesión
+      operationId: patch__api_notificaciones_leidas
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                mensaje: 8 notificaciones marcadas como leidas
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+      security:
+        - bearerAuth: []
+  /api/reportes/resumen-mensual:
+    get:
+      tags:
+        - Reportes
+      summary: Resumen mensual de ingresos y egresos
+      description: |-
+        RF02. Ingresos = pagos verificados del mes; egresos = compras de inventario (entradas con costo); balance; pagos por método; citas por estado y servicios más solicitados. Por defecto, el mes actual.
+
+        **Acceso:** Administrador
+      operationId: get__api_reportes_resumen_mensual
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  periodo: 2026-10
+                  ingresos: 160000
+                  egresos: 810000
+                  balance: -650000
+                  pagosVerificados: 7
+                  comprasInventario: 6
+                  pagosPendientes: 0
+                  ingresosPorMetodo:
+                    efectivo: 116000
+                    transferencia: 44000
+                  citasPorEstado:
+                    pendiente: 0
+                    confirmada: 0
+                    cancelada: 0
+                    completada: 0
+                  totalCitas: 0
+                  serviciosMasSolicitados: []
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: anio
+          in: query
+          required: false
+          description: Año (ej. 2026)
+          schema:
+            type: integer
+        - name: mes
+          in: query
+          required: false
+          description: Mes 1-12
+          schema:
+            type: integer
+  /api/reportes/indicadores:
+    get:
+      tags:
+        - Reportes
+      summary: Indicadores del panel
+      description: |-
+        Citas de hoy, citas pendientes, clientes activos, productos con stock bajo y pagos por verificar.
+
+        **Acceso:** Administrador
+      operationId: get__api_reportes_indicadores
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  citasHoy: 0
+                  citasPendientes: 3
+                  clientesActivos: 17
+                  productosStockBajo: 4
+                  pagosPendientes: 0
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+  /api/reportes/ingresos-por-mes:
+    get:
+      tags:
+        - Reportes
+      summary: Ingresos por mes de un año
+      description: |-
+        Ingresos verificados de cada mes (enero a diciembre) para la gráfica del panel.
+
+        **Acceso:** Administrador
+      operationId: get__api_reportes_ingresos_por_mes
+      responses:
+        "200":
+          description: Operación exitosa
+          content:
+            application/json:
+              example:
+                exito: true
+                datos:
+                  anio: 2026
+                  ingresos:
+                    - 0
+                    - 0
+                  total: 160000
+        "400":
+          description: Datos invalidos (el detalle de cada campo viene en "errores")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Datos invalidos (el detalle de cada campo viene en "errores")
+                  value:
+                    exito: false
+                    mensaje: Datos invalidos (el detalle de cada campo viene en "errores")
+        "401":
+          description: Debe iniciar sesion (falta el token de acceso)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Debe iniciar sesion (falta el token de acceso)
+                  value:
+                    exito: false
+                    mensaje: Debe iniciar sesion (falta el token de acceso)
+        "403":
+          description: Su rol no tiene permiso para esta accion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RespuestaError"
+              examples:
+                caso1:
+                  summary: Su rol no tiene permiso para esta accion
+                  value:
+                    exito: false
+                    mensaje: Su rol no tiene permiso para esta accion
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: anio
+          in: query
+          required: false
+          description: Año (por defecto el actual)
+          schema:
+            type: integer

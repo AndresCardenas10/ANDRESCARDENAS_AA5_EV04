@@ -1,0 +1,97 @@
+/* ============================================================
+   SGB — base.css
+   Reset, tipografía base y utilidades Neumorphism reutilizables
+   en todo el sitio (público + paneles).
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
+
+::selection { background: var(--blue); color: #fff; }
+
+a { color: inherit; }
+button { font-family: var(--font-body); }
+img { max-width: 100%; display: block; }
+
+/* ── Neumorphism — elementos claros ── */
+.neu-raised {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
+}
+.neu-flat {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+}
+.neu-inset {
+  background: var(--surface-sunken);
+  border-radius: var(--r-md);
+  box-shadow: inset 4px 4px 9px var(--shadow-dark), inset -4px -4px 9px var(--shadow-light);
+}
+.neu-pill {
+  border-radius: var(--r-full);
+  box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+}
+
+/* ── Neumorphism — elementos oscuros (navy) ── */
+.neu-dark-raised {
+  background: var(--surface-dark);
+  border-radius: var(--r-md);
+  box-shadow: 9px 9px 18px var(--shadow-dark-on-dark), -9px -9px 18px var(--shadow-light-on-dark);
+}
+.neu-dark-inset {
+  background: var(--surface-dark);
+  border-radius: var(--r-md);
+  box-shadow: inset 4px 4px 9px var(--shadow-dark-on-dark), inset -4px -4px 9px var(--shadow-light-on-dark);
+}
+
+/* ── Botón que se "presiona" al hacer clic (feedback táctil neumórfico) ── */
+.neu-press { transition: box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.neu-press:active { transform: translateY(1px) scale(.99); }
+
+/* ── Scroll-reveal genérico (usado por js/reveal.js) ── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .08s; }
+.reveal-delay-2 { transition-delay: .16s; }
+.reveal-delay-3 { transition-delay: .24s; }
+.reveal-delay-4 { transition-delay: .32s; }
+.reveal-delay-5 { transition-delay: .4s; }
+
+/* ── Divisores orgánicos entre secciones ── */
+.section-wave { display: block; width: 100%; height: 90px; position: relative; margin-top: -1px; }
+.section-wave svg { width: 100%; height: 100%; display: block; }
+
+/* ── Focus visible accesible ── */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--blue-light);
+  outline-offset: 2px;
+}
+
+/* ── Toast (compartido en todo el sitio) ── */
+.toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 300; display: flex; flex-direction: column; gap: .75rem; }
+.toast {
+  background: var(--surface-dark); color: white; padding: 1rem 1.5rem;
+  border-radius: var(--r-sm); font-size: .875rem;
+  box-shadow: 10px 10px 24px var(--shadow-dark-on-dark), -6px -6px 18px var(--shadow-light-on-dark), inset 0 1px 0 rgba(255,255,255,.04);
+  min-width: 280px; animation: slideIn .35s var(--ease);
+  border-left: 3px solid var(--blue);
+}
+.toast.success { border-color: var(--success); }
+.toast.error { border-color: var(--danger); }
+.toast.warn { border-color: var(--warning); }
+@keyframes slideIn { from { transform: translateX(110px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

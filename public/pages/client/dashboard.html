@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGB — Mi Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../../css/variables.css">
+<link rel="stylesheet" href="../../css/base.css">
+<link rel="stylesheet" href="../../css/components.css">
+<link rel="stylesheet" href="../../css/dashboard.css">
+</head>
+<body class="dash">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="../../index.html" class="sidebar-logo">S<span>GB</span></a>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Principal</div>
+    <button class="nav-item active" onclick="showSection('dashboard')">
+      <i class="fas fa-th-large"></i>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showSection('reservar')">
+      <i class="fas fa-calendar-plus"></i>
+      <span class="nav-label">Reservar cita</span>
+    </button>
+    <button class="nav-item" onclick="showSection('citas')">
+      <i class="fas fa-calendar-alt"></i>
+      <span class="nav-label">Mis citas</span>
+    </button>
+    <div class="sidebar-section-label" style="margin-top:.5rem">Cuenta</div>
+    <button class="nav-item" onclick="showSection('pagos')">
+      <i class="fas fa-receipt"></i>
+      <span class="nav-label">Pagos</span>
+    </button>
+    <button class="nav-item" onclick="showSection('perfil')">
+      <i class="fas fa-user"></i>
+      <span class="nav-label">Mi perfil</span>
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-mini">
+      <div class="user-avatar" id="sidebarAvatar">JC</div>
+      <div class="user-info">
+        <div class="user-info-name" id="sidebarName">Juan Cliente</div>
+        <div class="user-info-role">Cliente</div>
+      </div>
+    </div>
+    <button class="nav-item" onclick="logout()" style="color: rgba(239,68,68,.7)">
+      <i class="fas fa-sign-out-alt"></i>
+      <span class="nav-label">Cerrar sesión</span>
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Mi Dashboard</div>
+      <div class="topbar-subtitle" id="topbarSub">Bienvenido de nuevo</div>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn"><i class="fas fa-bell"></i><div class="notif-dot"></div></button>
+      <button class="topbar-btn" onclick="showSection('reservar')">+ Reservar cita</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section-panel active" id="panel-dashboard">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-accent"></div>
+          <div class="stat-card-label">Próximas citas</div>
+          <div class="stat-card-num" id="statProximas">1</div>
+          <div class="stat-card-sub">Este mes</div>
+          <div class="stat-card-icon"><i class="fas fa-calendar"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent" style="background:var(--success)"></div>
+          <div class="stat-card-label">Citas completadas</div>
+          <div class="stat-card-num" id="statCompletadas">1</div>
+          <div class="stat-card-sub">Historial total</div>
+          <div class="stat-card-icon"><i class="fas fa-check-circle"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-accent" style="background:var(--blue-light)"></div>
+          <div class="stat-card-label">Total invertido</div>
+          <div class="stat-card-num" id="statGastado">$65K</div>
+          <div class="stat-card-sub">En servicios</div>
+          <div class="stat-card-icon"><i class="fas fa-coins"></i></div>
+        </div>
+      </div>
+
+      <!-- NEXT APPT -->
+      <div class="next-appt" id="nextApptCard">
+        <div>
+          <div class="next-appt-tag">Tu próxima visita</div>
+          <div class="next-appt-title" id="nextApptService">Combo Premium</div>
+          <div class="next-appt-details" id="nextApptDetails">Con Carlos Barbero · Efectivo</div>
+        </div>
+        <div class="next-appt-right">
+          <div class="next-appt-date" id="nextApptDate">JUN 10</div>
+          <div class="next-appt-time" id="nextApptTime">10:00 AM</div>
+          <div style="margin-top:.5rem" id="nextApptBadge"></div>
+        </div>
+      </div>
+
+      <!-- RECENT -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Actividad reciente</div>
+          <button class="filter-btn active" onclick="showSection('citas')">Ver todo</button>
+        </div>
+        <div class="table-wrap">
+        <table class="neu-table">
+          <thead><tr><th>Servicio</th><th>Barbero</th><th>Fecha</th><th>Estado</th><th>Pago</th></tr></thead>
+          <tbody id="recentTable"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESERVAR -->
+    <div class="section-panel" id="panel-reservar">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-title">Nueva reserva</div>
+          <div class="form-card-subtitle">Selecciona el servicio, barbero, fecha y horario de tu preferencia</div>
+        </div>
+        <div class="form-card-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Servicio</label>
+              <select id="bookService" onchange="updatePrice()">
+                <option value="">Seleccionar servicio</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Barbero</label>
+              <select id="bookBarber" onchange="cargarHorasDisponibles()">
+                <option value="">Seleccionar barbero</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Fecha</label>
+              <input type="date" id="bookDate" min="" onchange="cargarHorasDisponibles()">
+            </div>
+            <div class="field">
+              <label>Método de pago</label>
+              <select id="bookPayment">
+                <option value="efectivo">Efectivo</option>
+                <option value="transferencia">Transferencia bancaria</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>Horario disponible</label>
+              <div class="time-slots" id="timeSlots"><span style="font-size:.85rem;color:var(--gray-text)">Elige servicio, barbero y fecha para ver las horas libres</span></div>
+            </div>
+            <div class="field full">
+              <label>Notas para el barbero (opcional)</label>
+              <input type="text" id="bookNotas" maxlength="500" placeholder="Ej: corte bajito a los lados">
+            </div>
+            <div class="field full" id="uploadSection" style="display:none">
+              <label>Comprobante de transferencia</label>
+              <div class="upload-area" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Arrastra aquí o <strong>haz clic para seleccionar</strong></p>
+                <p style="font-size:.75rem;color:var(--gray-text);margin-top:.25rem">JPG, PNG o WEBP · Máx 5MB</p>
+                <img class="upload-preview" id="uploadPreview" src="" alt="">
+              </div>
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewFile(this)">
+            </div>
+          </div>
+          <div class="neu-inset" style="padding:1.1rem 1.6rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.875rem;color:var(--gray-text)">Total a pagar:</span>
+            <span style="font-family:var(--font-display);font-size:2rem;color:var(--navy)" id="priceDisplay">$0</span>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="submitBooking()">Confirmar reserva</button>
+            <button class="btn btn-ghost" onclick="resetForm()">Limpiar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CITAS -->
+    <div class="section-panel" id="panel-citas">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Mis citas</div>
+          <div class="table-filters">
+            <button class="filter-btn active" onclick="filterAppts(this,'todas')">Todas</button>
+            <button class="filter-btn" onclick="filterAppts(this,'pendiente')">Pendientes</button>
+            <button class="filter-btn" onclick="filterAppts(this,'confirmada')">Confirmadas</button>
+            <button class="filter-btn" onclick="filterAppts(this,'completada')">Completadas</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+        <table class="neu-table">
+          <thead><tr><th>Servicio</th><th>Barbero</th><th>Fecha</th><th>Hora</th><th>Pago</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="citasTable"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGOS -->
+    <div class="section-panel" id="panel-pagos">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Historial de pagos</div>
+        </div>
+        <div class="table-wrap">
+        <table class="neu-table">
+          <thead><tr><th>Cita</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Estado</th></tr></thead>
+          <tbody id="pagosTable"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFIL -->
+    <div class="section-panel" id="panel-perfil">
+      <div class="profile-grid">
+        <div class="profile-card-left">
+          <div class="profile-avatar" id="profileAvatar">JC</div>
+          <div class="profile-name" id="profileName">Juan Cliente</div>
+          <div class="profile-role">Cliente</div>
+          <hr class="profile-divider">
+          <div class="profile-stat-item"><span>Visitas</span><span id="pVisitas">8</span></div>
+          <div class="profile-stat-item"><span>Total gastado</span><span id="pGastado">$280.000</span></div>
+          <div class="profile-stat-item"><span>Miembro desde</span><span id="pMiembro">-</span></div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-header">
+            <div class="form-card-title">Editar perfil</div>
+            <div class="form-card-subtitle">Actualiza tu información personal</div>
+          </div>
+          <div class="form-card-body">
+            <div class="form-grid">
+              <div class="field"><label>Nombre</label><input id="pNombre" type="text" value=""></div>
+              <div class="field"><label>Apellido</label><input id="pApellido" type="text" value=""></div>
+              <div class="field"><label>Teléfono</label><input id="pTelefono" type="tel" value=""></div>
+              <div class="field"><label>Correo</label><input type="email" id="pCorreo" value="" disabled style="opacity:.6;cursor:not-allowed"></div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="saveProfile()">Guardar cambios</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- CANCEL MODAL -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Cancelar cita</h3>
+      <button class="modal-close-btn" onclick="document.getElementById('cancelModal').classList.remove('open')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body-inner">
+      <div class="field">
+        <label>Motivo de cancelación</label>
+        <select id="cancelReason">
+          <option>Cambio de planes</option>
+          <option>Emergencia personal</option>
+          <option>Error en la reserva</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-danger" onclick="confirmCancel()">Confirmar cancelación</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('cancelModal').classList.remove('open')">Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/toast.js"></script>
+<script src="../../js/dashboard-client.js"></script>
+</body>
+</html>

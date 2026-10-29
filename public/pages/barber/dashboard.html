@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGB — Panel de Barbero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../../css/variables.css">
+<link rel="stylesheet" href="../../css/base.css">
+<link rel="stylesheet" href="../../css/components.css">
+<link rel="stylesheet" href="../../css/dashboard.css">
+<link rel="stylesheet" href="../../css/dashboard-barber.css">
+</head>
+<body class="dash">
+
+<aside class="sidebar">
+  <a href="../../index.html" class="sidebar-logo">S<span>GB</span></a>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Mi panel</div>
+    <button class="nav-item active" onclick="showSection('dashboard')"><i class="fas fa-th-large"></i><span class="nav-label">Dashboard</span></button>
+    <button class="nav-item" onclick="showSection('citas')"><i class="fas fa-calendar-check"></i><span class="nav-label">Mis citas</span></button>
+    <button class="nav-item" onclick="showSection('disponibilidad')"><i class="fas fa-clock"></i><span class="nav-label">Disponibilidad</span></button>
+    <button class="nav-item" onclick="showSection('calendario')"><i class="fas fa-calendar-alt"></i><span class="nav-label">Calendario</span></button>
+    <button class="nav-item" onclick="showSection('clientes')"><i class="fas fa-users"></i><span class="nav-label">Clientes</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-mini">
+      <div class="user-avatar" id="sidebarAvatar">CB</div>
+      <div class="user-info">
+        <div class="user-info-name" id="sidebarName">Carlos Barbero</div>
+        <div class="user-info-role">Barbero</div>
+      </div>
+    </div>
+    <button class="nav-item" onclick="logout()" style="color:rgba(239,68,68,.7)"><i class="fas fa-sign-out-alt"></i><span class="nav-label">Cerrar sesión</span></button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Mi Dashboard</div>
+      <div class="topbar-subtitle" id="topbarSub">Bienvenido, Carlos</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-toggle"><div class="status-dot"></div><span style="font-size:.8rem;font-weight:500">Disponible</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section-panel active" id="panel-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-card-accent"></div><div class="stat-card-label">Citas hoy</div><div class="stat-card-num" id="statHoy">3</div><div class="stat-card-sub">Programadas</div></div>
+        <div class="stat-card"><div class="stat-card-accent" style="background:var(--warning)"></div><div class="stat-card-label">Pendientes</div><div class="stat-card-num" id="statPend">1</div><div class="stat-card-sub">Por confirmar</div></div>
+        <div class="stat-card"><div class="stat-card-accent" style="background:var(--success)"></div><div class="stat-card-label">Completadas</div><div class="stat-card-num" id="statComp">1</div><div class="stat-card-sub">Este mes</div></div>
+        <div class="stat-card"><div class="stat-card-accent" style="background:var(--blue-light)"></div><div class="stat-card-label">Generado</div><div class="stat-card-num" id="statGen">$65K</div><div class="stat-card-sub">Este mes</div></div>
+      </div>
+      <div class="two-col">
+        <div class="agenda-card">
+          <div class="card-header"><span class="card-title">Agenda de hoy</span><span id="todayDate" style="font-size:.8rem;color:var(--gray-text)"></span></div>
+          <div class="appt-list" id="todayList"></div>
+        </div>
+        <div class="agenda-card">
+          <div class="card-header"><span class="card-title">Próximas citas</span></div>
+          <div class="appt-list" id="upcomingList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CITAS -->
+    <div class="section-panel" id="panel-citas">
+      <div class="agenda-card">
+        <div class="card-header">
+          <span class="card-title">Todas mis citas</span>
+          <div class="table-filters">
+            <button class="filter-btn active" onclick="filterBarberAppts(this,'todas')">Todas</button>
+            <button class="filter-btn" onclick="filterBarberAppts(this,'pendiente')">Pendientes</button>
+            <button class="filter-btn" onclick="filterBarberAppts(this,'confirmada')">Confirmadas</button>
+            <button class="filter-btn" onclick="filterBarberAppts(this,'completada')">Completadas</button>
+          </div>
+        </div>
+        <div id="allApptsList"></div>
+      </div>
+    </div>
+
+    <!-- DISPONIBILIDAD -->
+    <div class="section-panel" id="panel-disponibilidad">
+      <div class="agenda-card">
+        <div class="card-header"><span class="card-title">Disponibilidad semanal</span><span style="font-size:.8rem;color:var(--gray-text)">Activa los horarios en que atiendes (cada bloque es 1 hora)</span><button class="filter-btn active" onclick="saveAvailability()">Guardar horario</button></div>
+        <div class="avail-grid" id="availGrid"></div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO -->
+    <div class="section-panel" id="panel-calendario">
+      <div class="two-col">
+        <div class="agenda-card">
+          <div class="card-header"><span class="card-title">Calendario</span></div>
+          <div class="calendar-wrap">
+            <div class="cal-nav">
+              <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+              <span class="cal-month" id="calMonthLabel"></span>
+              <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+        </div>
+        <div class="agenda-card">
+          <div class="card-header"><span class="card-title">Eventos del día</span><span id="selectedDateLabel" style="font-size:.8rem;color:var(--gray-text)">Selecciona un día</span></div>
+          <div class="appt-list" id="dayEvents"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="section-panel" id="panel-clientes">
+      <div class="agenda-card">
+        <div class="card-header"><span class="card-title">Clientes atendidos</span></div>
+        <div class="table-wrap">
+        <table class="neu-table">
+          <thead><tr><th>Cliente</th><th>Última visita</th><th>Servicio</th><th>Visitas</th><th>Total</th></tr></thead>
+          <tbody id="clientsTable"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../js/api.js"></script>
+<script src="../../js/toast.js"></script>
+<script src="../../js/dashboard-barber.js"></script>
+</body>
+</html>
