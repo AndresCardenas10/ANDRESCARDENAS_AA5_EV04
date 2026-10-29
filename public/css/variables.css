@@ -1,0 +1,55 @@
+/* ============================================================
+   SGB — Sistema Gestión Barbería
+   Design tokens — paleta actualizada (azul monocromático)
+   Se añaden tokens de superficie/sombra para el sistema Neumorphism
+   ============================================================ */
+:root {
+  /* — Marca — */
+  --navy: #1b3a6b;
+  --blue: #5aa7ff;
+  --blue-light: #7fbdff;
+  --blue-pale: #cfe6ff;
+  --white: #ffffff;
+  --gray-soft: #eaf3ff;
+  --gray-mid: #cfe6ff;
+  --gray-text: #5c7699;
+  --accent: #5aa7ff;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* — Superficies neumórficas (derivadas de la paleta) — */
+  --surface: #eaf3ff;          /* base "arcilla" clara sobre la que flotan los elementos */
+  --surface-raised: #f4f9ff;   /* variante más clara, para elementos elevados */
+  --surface-sunken: #dcebfd;   /* variante para zonas hundidas / fondos de sección */
+
+  --shadow-dark: rgba(151, 183, 222, .55);
+  --shadow-dark-strong: rgba(130, 166, 209, .7);
+  --shadow-light: rgba(255, 255, 255, .85);
+  --shadow-light-strong: rgba(255, 255, 255, 1);
+
+  /* — Superficies oscuras (navbar, hero, sidebar, footer) — */
+  --surface-dark: #1b3a6b;
+  --surface-dark-raised: #234a86;
+  --shadow-dark-on-dark: rgba(10, 22, 45, .6);
+  --shadow-light-on-dark: rgba(90, 167, 255, .3);
+
+  /* — Radios — */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-xl: 34px;
+  --r-full: 999px;
+
+  /* — Tipografía (sin cambios: mismas familias de la identidad original) — */
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-serif: 'DM Serif Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  /* — Duraciones — */
+  --ease: cubic-bezier(.4,0,.2,1);
+  --t-fast: .2s;
+  --t-med: .35s;
+  --t-slow: .6s;
+}

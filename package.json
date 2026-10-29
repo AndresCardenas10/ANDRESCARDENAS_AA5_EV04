@@ -1,0 +1,28 @@
+{
+  "name": "sgb-api-ev04",
+  "version": "1.0.0",
+  "description": "API REST del Sistema Gestion Barberia (SGB) y su testing con Postman - Evidencia GA7-220501096-AA5-EV04",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "npx newman run pruebas/SGB_API_EV04.postman_collection.json -e pruebas/SGB_Local.postman_environment.json --working-dir ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Andrés Cárdenas",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "mysql2": "^3.24.6",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.1"
+  }
+}

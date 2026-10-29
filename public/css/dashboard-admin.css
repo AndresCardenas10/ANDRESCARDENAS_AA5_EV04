@@ -1,0 +1,43 @@
+/* ============================================================
+   SGB — dashboard-admin.css (deltas del panel administrativo)
+   ============================================================ */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem; }
+.kpi-card { background: var(--surface); padding: 1.6rem; border-radius: var(--r-lg); position: relative; overflow: hidden; box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); transition: box-shadow .25s; }
+.kpi-card:hover { box-shadow: 10px 10px 22px var(--shadow-dark-strong), -10px -10px 22px var(--shadow-light-strong); }
+.kpi-accent { position: absolute; right: 0; top: 0; bottom: 0; width: 4px; border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+.kpi-label { font-size: .64rem; text-transform: uppercase; letter-spacing: .1em; color: var(--gray-text); font-weight: 700; margin-bottom: .5rem; }
+.kpi-val { font-family: var(--font-display); font-size: 2.6rem; color: var(--navy); line-height: 1; }
+.kpi-sub { font-size: .73rem; color: var(--gray-text); margin-top: .35rem; display: flex; align-items: center; gap: .3rem; }
+.kpi-trend { font-size: .7rem; font-weight: 700; }
+.kpi-trend.up { color: var(--success); }
+.kpi-trend.down { color: var(--danger); }
+
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+.chart-card { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); }
+.chart-header { padding: 1.25rem 1.75rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 0 var(--shadow-dark); }
+.chart-title { font-weight: 700; font-size: .95rem; color: var(--navy); }
+.chart-body { padding: 1.5rem; }
+
+.inv-alert { background: rgba(239,68,68,.06); border-radius: var(--r-md); box-shadow: inset 0 0 0 1px rgba(239,68,68,.15); padding: 1rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+.inv-alert i { color: var(--danger); font-size: 1rem; }
+.inv-alert span { font-size: .875rem; color: var(--navy); font-weight: 500; }
+.stock-bar-wrap { display: flex; align-items: center; gap: .75rem; }
+.stock-bar { flex: 1; height: 7px; border-radius: var(--r-full); box-shadow: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light); overflow: hidden; }
+.stock-bar-fill { height: 100%; border-radius: var(--r-full); background: var(--blue); transition: width .3s; }
+.stock-bar-fill.low { background: var(--danger); }
+.stock-bar-fill.mid { background: var(--warning); }
+.stock-num { font-size: .8rem; font-weight: 700; min-width: 30px; text-align: right; }
+
+.reports-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.25rem; margin-bottom: 2rem; }
+.report-kpi { background: var(--surface); border-radius: var(--r-lg); padding: 1.6rem; text-align: center; box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); }
+.report-kpi-val { font-family: var(--font-display); font-size: 2.4rem; color: var(--navy); }
+.report-kpi-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--gray-text); margin-top: .3rem; }
+
+.voucher-preview { max-width: 60px; max-height: 45px; border-radius: var(--r-sm); box-shadow: 3px 3px 7px var(--shadow-dark); object-fit: cover; cursor: pointer; }
+
+.btn-modal { background: linear-gradient(145deg, var(--blue-light), var(--blue)); color: white; border: none; padding: .85rem 2rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; border-radius: var(--r-full); cursor: pointer; transition: all .2s; font-family: var(--font-body); box-shadow: 5px 6px 14px rgba(10,22,45,.2); }
+.btn-modal:hover { transform: translateY(-1px); }
+.btn-modal-sec { background: var(--surface); color: var(--navy); border: none; padding: .85rem 2rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; border-radius: var(--r-full); cursor: pointer; transition: all .2s; font-family: var(--font-body); margin-left: .75rem; box-shadow: 4px 4px 9px var(--shadow-dark), -4px -4px 9px var(--shadow-light); }
+
+@media (max-width: 1200px) { .kpi-row { grid-template-columns: 1fr 1fr; } .charts-row { grid-template-columns: 1fr; } .reports-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .kpi-row { grid-template-columns: 1fr; } .reports-grid { grid-template-columns: 1fr; } }

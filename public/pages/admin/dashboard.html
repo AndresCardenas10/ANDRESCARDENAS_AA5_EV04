@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGB — Panel Administrativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../../css/variables.css">
+<link rel="stylesheet" href="../../css/base.css">
+<link rel="stylesheet" href="../../css/components.css">
+<link rel="stylesheet" href="../../css/dashboard.css">
+<link rel="stylesheet" href="../../css/dashboard-admin.css">
+</head>
+<body class="dash">
+
+<aside class="sidebar">
+  <a href="../../index.html" class="sidebar-logo">S<span>GB</span></a>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">General</div>
+    <button class="nav-item active" onclick="showSection('dashboard')"><i class="fas fa-th-large"></i><span class="nav-label">Dashboard</span></button>
+    <button class="nav-item" onclick="showSection('citas')"><i class="fas fa-calendar-alt"></i><span class="nav-label">Citas</span></button>
+    <div class="sidebar-section-label">Gestión</div>
+    <button class="nav-item" onclick="showSection('usuarios')"><i class="fas fa-users-cog"></i><span class="nav-label">Usuarios</span></button>
+    <button class="nav-item" onclick="showSection('barberos')"><i class="fas fa-cut"></i><span class="nav-label">Barberos</span></button>
+    <button class="nav-item" onclick="showSection('clientes')"><i class="fas fa-user-friends"></i><span class="nav-label">Clientes</span></button>
+    <button class="nav-item" onclick="showSection('servicios')"><i class="fas fa-tags"></i><span class="nav-label">Servicios</span></button>
+    <div class="sidebar-section-label">Operaciones</div>
+    <button class="nav-item" onclick="showSection('inventario')"><i class="fas fa-boxes"></i><span class="nav-label">Inventario</span></button>
+    <button class="nav-item" onclick="showSection('reportes')"><i class="fas fa-chart-bar"></i><span class="nav-label">Reportes</span></button>
+    <button class="nav-item" onclick="showSection('comprobantes')"><i class="fas fa-file-invoice"></i><span class="nav-label">Comprobantes</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-mini">
+      <div class="user-avatar" id="sidebarAvatar">AD</div>
+      <div class="user-info">
+        <div class="user-info-name" id="sidebarName">Administrador</div>
+        <div class="user-info-role" style="color:var(--blue-pale)">Admin</div>
+      </div>
+    </div>
+    <button class="nav-item" onclick="logout()" style="color:rgba(239,68,68,.7)"><i class="fas fa-sign-out-alt"></i><span class="nav-label">Cerrar sesión</span></button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Dashboard Administrativo</div>
+      <div class="topbar-subtitle" id="topbarSub">Visión general del negocio</div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar"><i class="fas fa-search" style="font-size:.8rem"></i><input placeholder="Buscar..." id="searchInput"></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section-panel active" id="panel-dashboard">
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--blue)"></div><div class="kpi-label">Ingresos del mes</div><div class="kpi-val" id="kpiIngresos">$0</div><div class="kpi-sub" id="kpiIngresosSub">Pagos verificados</div></div>
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--success)"></div><div class="kpi-label">Citas este mes</div><div class="kpi-val" id="kpiCitas">0</div><div class="kpi-sub" id="kpiCitasSub">Agendadas para este mes</div></div>
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--warning)"></div><div class="kpi-label">Ticket promedio</div><div class="kpi-val" id="kpiTicket">$0</div><div class="kpi-sub">Por servicio</div></div>
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--danger)"></div><div class="kpi-label">Alertas inventario</div><div class="kpi-val" id="kpiAlerts">0</div><div class="kpi-sub">Productos bajo stock</div></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Ingresos mensuales</span><span style="font-size:.75rem;color:var(--gray-text)" id="anioGrafica"></span></div>
+          <div class="chart-body"><canvas id="revenueChart" height="220"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">Estado de citas</span></div>
+          <div class="chart-body" style="display:flex;flex-direction:column;align-items:center"><canvas id="statusChart" height="220"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Últimas citas</span></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Cliente</th><th>Barbero</th><th>Servicio</th><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead><tbody id="recentAppts"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CITAS GLOBAL -->
+    <div class="section-panel" id="panel-citas">
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Todas las citas</span>
+          <div class="table-filters">
+            <button class="filter-btn active" onclick="filterAdminAppts(this,'todas')">Todas</button>
+            <button class="filter-btn" onclick="filterAdminAppts(this,'pendiente')">Pendientes</button>
+            <button class="filter-btn" onclick="filterAdminAppts(this,'confirmada')">Confirmadas</button>
+            <button class="filter-btn" onclick="filterAdminAppts(this,'completada')">Completadas</button>
+            <button class="filter-btn" onclick="filterAdminAppts(this,'cancelada')">Canceladas</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>ID</th><th>Cliente</th><th>Barbero</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Monto</th><th>Pago</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="allCitasTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="section-panel" id="panel-usuarios">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Usuarios del sistema</span><button class="action-btn" style="background:var(--blue);color:white" onclick="openModal('modalUsuario')">+ Nuevo usuario</button></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usuariosTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- BARBEROS -->
+    <div class="section-panel" id="panel-barberos">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Barberos</span><button class="action-btn" style="background:var(--blue);color:white" onclick="openModal('modalBarbero')">+ Agregar barbero</button></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Barbero</th><th>Correo</th><th>Rating</th><th>Citas</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="barberosTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="section-panel" id="panel-clientes">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Clientes registrados</span></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Cliente</th><th>Correo</th><th>Visitas</th><th>Total gastado</th><th>Estado</th></tr></thead><tbody id="clientesTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- SERVICIOS -->
+    <div class="section-panel" id="panel-servicios">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Servicios</span><button class="action-btn" style="background:var(--blue);color:white" onclick="openModal('modalServicio')">+ Nuevo servicio</button></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Servicio</th><th>Categoría</th><th>Precio</th><th>Duración</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="serviciosTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="section-panel" id="panel-inventario">
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--blue)"></div><div class="kpi-label">Total productos</div><div class="kpi-val" id="invTotal">0</div></div>
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--danger)"></div><div class="kpi-label">Bajo stock</div><div class="kpi-val" id="invLow">0</div></div>
+        <div class="kpi-card"><div class="kpi-accent" style="background:var(--warning)"></div><div class="kpi-label">Valor inventario</div><div class="kpi-val" id="invVal">$0</div></div>
+      </div>
+      <div class="inv-alert"><i class="fas fa-exclamation-triangle"></i><span id="invAlertMsg">Verificando inventario...</span></div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Inventario</span><button class="action-btn" style="background:var(--blue);color:white" onclick="openModal('modalInventario')">+ Agregar producto</button></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Producto</th><th>Categoría</th><th>Stock</th><th>Stock mínimo</th><th>Valor unit.</th><th>Estado</th><th>Acción rápida</th></tr></thead><tbody id="inventarioTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div class="section-panel" id="panel-reportes">
+      <div class="reports-grid">
+        <div class="report-kpi"><div class="report-kpi-val" id="rIngresos">$0</div><div class="report-kpi-label">Ingresos del año</div></div>
+        <div class="report-kpi"><div class="report-kpi-val" id="rMes">$0</div><div class="report-kpi-label">Ingresos del mes</div></div>
+        <div class="report-kpi"><div class="report-kpi-val" id="rPendiente">$0</div><div class="report-kpi-label">Egresos del mes (compras)</div></div>
+        <div class="report-kpi"><div class="report-kpi-val" id="rTicket">$0</div><div class="report-kpi-label">Balance del mes</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Desglose por servicio (citas completadas del mes)</span><span id="periodoReporte" style="font-size:.8rem;color:var(--gray-text)"></span></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Servicio</th><th>Citas</th><th>Ingresos</th><th>Promedio</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- COMPROBANTES -->
+    <div class="section-panel" id="panel-comprobantes">
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Pagos y comprobantes</span></div>
+        <div class="table-wrap"><table class="neu-table"><thead><tr><th>Cita</th><th>Cliente</th><th>Servicio</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Comprobante</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="comprobantesTable"></tbody></table></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalUsuario">
+  <div class="modal-box">
+    <div class="modal-header"><h3>Nuevo usuario</h3><button class="modal-close-btn" onclick="closeModal('modalUsuario')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body-inner">
+      <div class="form-grid2">
+        <div class="field"><label>Nombre</label><input id="uNombre" type="text" placeholder="Nombre y apellido"></div>
+        <div class="field"><label>Correo</label><input id="uEmail" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Rol</label><select id="uRol"><option>Cliente</option><option>Barbero</option><option>Administrador</option></select></div>
+        <div class="field"><label>Contraseña</label><input id="uPass" type="password" placeholder="Mínimo 8, letras y números"></div>
+      </div>
+      <button class="btn-modal" onclick="saveUser()">Guardar usuario</button>
+      <button class="btn-modal-sec" onclick="closeModal('modalUsuario')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalBarbero">
+  <div class="modal-box">
+    <div class="modal-header"><h3>Agregar barbero</h3><button class="modal-close-btn" onclick="closeModal('modalBarbero')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body-inner">
+      <div class="form-grid2">
+        <div class="field"><label>Nombre</label><input id="bNombre" type="text" placeholder="Nombre y apellido"></div>
+        <div class="field"><label>Correo</label><input id="bEmail" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Teléfono</label><input id="bTel" type="tel" placeholder="+57 300..."></div>
+        <div class="field"><label>Contraseña inicial</label><input id="bPass" type="password" placeholder="Mínimo 8, letras y números"></div>
+      </div>
+      <button class="btn-modal" onclick="saveBarber()">Agregar barbero</button>
+      <button class="btn-modal-sec" onclick="closeModal('modalBarbero')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalServicio">
+  <div class="modal-box">
+    <div class="modal-header"><h3>Nuevo servicio</h3><button class="modal-close-btn" onclick="closeModal('modalServicio')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body-inner">
+      <div class="form-grid2">
+        <div class="field"><label>Nombre</label><input id="sNombre" type="text" placeholder="Nombre del servicio"></div>
+        <div class="field"><label>Categoría</label><select id="sCat"><option>Corte</option><option>Barba</option><option>Combo</option><option>Tratamiento</option><option>Color</option></select></div>
+        <div class="field"><label>Precio ($)</label><input id="sPrecio" type="number" placeholder="25000"></div>
+        <div class="field"><label>Duración (min)</label><input id="sDur" type="number" placeholder="45"></div>
+      </div>
+      <button class="btn-modal" onclick="saveService()">Guardar servicio</button>
+      <button class="btn-modal-sec" onclick="closeModal('modalServicio')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalInventario">
+  <div class="modal-box">
+    <div class="modal-header"><h3>Agregar producto</h3><button class="modal-close-btn" onclick="closeModal('modalInventario')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body-inner">
+      <div class="form-grid2">
+        <div class="field"><label>Producto</label><input id="iNombre" type="text" placeholder="Nombre del producto"></div>
+        <div class="field"><label>Categoría</label><select id="iCat"><option>Styling</option><option>Cuidado</option><option>Herramientas</option><option>Insumos</option></select></div>
+        <div class="field"><label>Stock actual</label><input id="iStock" type="number" placeholder="10"></div>
+        <div class="field"><label>Stock mínimo</label><input id="iMin" type="number" placeholder="5"></div>
+        <div class="field"><label>Precio unitario</label><input id="iPrecio" type="number" placeholder="30000"></div>
+        <div class="field"><label>Unidad</label><input id="iUnidad" type="text" placeholder="unidad, frasco..."></div>
+      </div>
+      <button class="btn-modal" onclick="saveInventory()">Agregar producto</button>
+      <button class="btn-modal-sec" onclick="closeModal('modalInventario')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../js/vendor/chart.umd.min.js"></script>
+<script src="../../js/api.js"></script>
+<script src="../../js/toast.js"></script>
+<script src="../../js/dashboard-admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGB — El Arte del Corte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/navbar.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing">
+
+<!-- NAVBAR -->
+<nav id="mainNav">
+  <a href="index.html" class="nav-logo">S<span>GB</span></a>
+  <ul class="nav-links">
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#proceso">Cómo funciona</a></li>
+    <li><a href="#horarios">Horarios</a></li>
+    <li><a href="#resenas">Reseñas</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <div class="nav-cta">
+    <button class="btn-outline-nav" onclick="openModal()">Iniciar sesión</button>
+    <button class="btn-primary-nav" onclick="window.location.href='register.html'">Registrarse</button>
+    <button class="hamburger" onclick="toggleDrawer()"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <button class="mobile-drawer-close" onclick="toggleDrawer()"><i class="fas fa-times"></i></button>
+  <ul>
+    <li><a href="#servicios" onclick="toggleDrawer()">Servicios</a></li>
+    <li><a href="#proceso" onclick="toggleDrawer()">Cómo funciona</a></li>
+    <li><a href="#horarios" onclick="toggleDrawer()">Horarios</a></li>
+    <li><a href="#resenas" onclick="toggleDrawer()">Reseñas</a></li>
+    <li><a href="#contacto" onclick="toggleDrawer()">Contacto</a></li>
+  </ul>
+  <div class="mobile-drawer-btns">
+    <button class="btn-outline-nav" onclick="openModal(); toggleDrawer()">Iniciar sesión</button>
+    <button class="btn-primary-nav" onclick="window.location.href='register.html'">Registrarse</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid-lines"></div>
+  <div class="hero-left">
+    <div class="hero-eyebrow">Barbería profesional · Desde 2018</div>
+    <h1 class="hero-title">
+      El Arte<br>
+      Del <span class="accent-word">Corte</span><br>
+      Perfecto
+    </h1>
+    <p class="hero-desc">Experiencia premium para el hombre moderno. Barberos certificados, técnicas contemporáneas y un ambiente que inspira confianza.</p>
+    <div class="hero-actions">
+      <button class="btn-hero-primary" onclick="openModal()">Reservar cita</button>
+      <button class="btn-hero-ghost" onclick="document.querySelector('#servicios').scrollIntoView({behavior:'smooth'})">
+        <i class="fas fa-arrow-down"></i> Ver servicios
+      </button>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <span class="stat-num">500+</span>
+        <span class="stat-label">Clientes activos</span>
+      </div>
+      <div>
+        <span class="stat-num">12</span>
+        <span class="stat-label">Barberos expertos</span>
+      </div>
+      <div>
+        <span class="stat-num">4.9</span>
+        <span class="stat-label">Calificación</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-carousel">
+      <div class="hero-slide active" style="background-image:url('https://images.pexels.com/photos/3998403/pexels-photo-3998403.jpeg?auto=compress&cs=tinysrgb&w=1400')"></div>
+      <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3998408/pexels-photo-3998408.jpeg?auto=compress&cs=tinysrgb&w=1400')"></div>
+      <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3998422/pexels-photo-3998422.jpeg?auto=compress&cs=tinysrgb&w=1400')"></div>
+      <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3998430/pexels-photo-3998430.jpeg?auto=compress&cs=tinysrgb&w=1400')"></div>
+      <div class="hero-slide" style="background-image:url('https://images.pexels.com/photos/3998414/pexels-photo-3998414.jpeg?auto=compress&cs=tinysrgb&w=1400')"></div>
+      <div class="hero-bg-text">SGB</div>
+      <div class="hero-carousel-dots">
+        <button class="hero-dot active"></button>
+        <button class="hero-dot"></button>
+        <button class="hero-dot"></button>
+        <button class="hero-dot"></button>
+        <button class="hero-dot"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-wave wave-navy-to-surface">
+  <svg viewBox="0 0 1440 90" preserveAspectRatio="none"><path d="M0,30 C320,90 1120,0 1440,45 L1440,90 L0,90 Z" fill="var(--surface)"></path></svg>
+</div>
+
+<!-- SERVICES / CARRUSEL -->
+<section class="section-services" id="servicios">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">Nuestros servicios</div>
+      <h2 class="section-title">Todo lo que<br><em>necesitas</em></h2>
+    </div>
+    <p class="services-intro-text">Ofrecemos una gama completa de servicios para que luzcas impecable en cada ocasión. Las tarjetas avanzan solas — pasa el cursor para detenerlas.</p>
+  </div>
+
+  <div class="services-carousel reveal reveal-delay-1">
+    <div class="services-stage" id="servicesStage">
+      <button class="services-arrow prev" onclick="prevService()" aria-label="Servicio anterior"><i class="fas fa-chevron-left"></i></button>
+      <div class="services-track" id="servicesTrack">
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/1836983/pexels-photo-1836983.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">01 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-cut"></i></div>
+            <h3 class="service-slide-name">Corte Clásico</h3>
+            <p class="service-slide-desc">Corte tradicional con técnica depurada. Incluye lavado y estilizado con secador.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>25.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 45 min</span>
+            </div>
+          </div>
+        </article>
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/4625615/pexels-photo-4625615.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">02 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-user-tie"></i></div>
+            <h3 class="service-slide-name">Barba Completa</h3>
+            <p class="service-slide-desc">Perfilado, recorte y arreglo de barba con productos de alta gama y toalla caliente.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>20.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 35 min</span>
+            </div>
+          </div>
+        </article>
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/9992819/pexels-photo-9992819.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">03 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-star"></i></div>
+            <h3 class="service-slide-name">Combo Premium</h3>
+            <p class="service-slide-desc">Corte + barba completa + tratamiento capilar. La experiencia barbería total.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>40.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 75 min</span>
+            </div>
+          </div>
+        </article>
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/3998391/pexels-photo-3998391.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">04 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-spa"></i></div>
+            <h3 class="service-slide-name">Tratamiento Capilar</h3>
+            <p class="service-slide-desc">Hidratación profunda y nutrición del cuero cabelludo con mascarillas premium.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>30.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 30 min</span>
+            </div>
+          </div>
+        </article>
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/7697356/pexels-photo-7697356.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">05 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-child"></i></div>
+            <h3 class="service-slide-name">Corte Infantil</h3>
+            <p class="service-slide-desc">Corte para niños menores de 12 años, paciente y adaptado para los más pequeños.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>18.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 30 min</span>
+            </div>
+          </div>
+        </article>
+        <article class="service-slide">
+          <div class="service-slide-img" style="background-image:url('https://images.pexels.com/photos/3993292/pexels-photo-3993292.jpeg?auto=compress&cs=tinysrgb&w=1200')"></div>
+          <div class="service-slide-body">
+            <span class="service-slide-num">06 / 06</span>
+            <div class="service-slide-icon"><i class="fas fa-tint"></i></div>
+            <h3 class="service-slide-name">Tinte &amp; Color</h3>
+            <p class="service-slide-desc">Aplicación profesional de tinte o mechas con productos sin daño al cabello.</p>
+            <div class="service-slide-footer">
+              <div class="service-slide-price"><sup>$</sup>55.000</div>
+              <span class="service-slide-duration"><i class="far fa-clock"></i> 90 min</span>
+            </div>
+          </div>
+        </article>
+      </div>
+      <button class="services-arrow next" onclick="nextService()" aria-label="Siguiente servicio"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="services-dots" id="servicesDots">
+      <button class="services-dot active" onclick="goToService(0)" aria-label="Servicio 1"></button>
+      <button class="services-dot" onclick="goToService(1)" aria-label="Servicio 2"></button>
+      <button class="services-dot" onclick="goToService(2)" aria-label="Servicio 3"></button>
+      <button class="services-dot" onclick="goToService(3)" aria-label="Servicio 4"></button>
+      <button class="services-dot" onclick="goToService(4)" aria-label="Servicio 5"></button>
+      <button class="services-dot" onclick="goToService(5)" aria-label="Servicio 6"></button>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section-how" id="proceso">
+  <div class="how-grid">
+    <div class="how-left reveal">
+      <div class="section-tag">Proceso</div>
+      <h2 class="section-title">Reservar<br>es <em>fácil</em></h2>
+      <p class="how-desc">En menos de 2 minutos puedes agendar tu cita y elegir el barbero, servicio y horario que mejor se adapte a tu agenda.</p>
+    </div>
+    <div class="steps-list">
+      <div class="step-item reveal reveal-delay-1">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-title">Crea tu cuenta</div>
+          <p class="step-desc">Regístrate en menos de un minuto. Solo necesitas tu nombre, correo y teléfono.</p>
+        </div>
+      </div>
+      <div class="step-item reveal reveal-delay-2">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-title">Elige tu servicio y barbero</div>
+          <p class="step-desc">Selecciona el servicio que necesitas y el barbero de tu preferencia.</p>
+        </div>
+      </div>
+      <div class="step-item reveal reveal-delay-3">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-title">Selecciona fecha y horario</div>
+          <p class="step-desc">Consulta la disponibilidad en tiempo real y reserva el slot que más te convenga.</p>
+        </div>
+      </div>
+      <div class="step-item reveal reveal-delay-4">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <div class="step-title">Confirma y listo</div>
+          <p class="step-desc">Recibes confirmación instantánea. Llega puntual y disfruta tu experiencia premium.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-wave">
+  <svg viewBox="0 0 1440 90" preserveAspectRatio="none"><path d="M0,45 C400,0 1040,90 1440,20 L1440,90 L0,90 Z" fill="var(--white)"></path></svg>
+</div>
+
+<!-- SCHEDULE -->
+<section class="section-schedule" id="horarios">
+  <div class="section-tag reveal">Horarios</div>
+  <h2 class="section-title reveal" style="margin-bottom:0">Estamos <em>aquí</em> para ti</h2>
+  <div class="schedule-grid">
+    <table class="schedule-table card-neu schedule-card reveal reveal-delay-1">
+      <tbody>
+        <tr><td>Lunes</td><td>9:00 AM – 7:00 PM</td></tr>
+        <tr><td>Martes</td><td>9:00 AM – 7:00 PM</td></tr>
+        <tr><td>Miércoles</td><td>9:00 AM – 7:00 PM</td></tr>
+        <tr><td>Jueves</td><td>9:00 AM – 8:00 PM</td></tr>
+        <tr><td>Viernes</td><td>9:00 AM – 8:00 PM</td></tr>
+        <tr><td>Sábado</td><td>8:00 AM – 6:00 PM</td></tr>
+        <tr><td>Domingo</td><td class="schedule-closed">Cerrado</td></tr>
+      </tbody>
+    </table>
+    <div class="schedule-highlight neu-dark-raised schedule-card reveal reveal-delay-2">
+      <h3>Visítanos o escríbenos</h3>
+      <p>Estamos ubicados en el corazón de la ciudad, fácil de encontrar y con parqueadero disponible.</p>
+      <div class="schedule-contact-items">
+        <div class="contact-item"><i class="fas fa-map-marker-alt"></i> Calle 85 #15-32, Bogotá</div>
+        <div class="contact-item"><i class="fas fa-phone"></i> +57 300 123 4567</div>
+        <div class="contact-item"><i class="fas fa-envelope"></i> info@sgb.co</div>
+        <div class="contact-item"><i class="fab fa-instagram"></i> @sgb.barberia</div>
+        <div class="contact-item"><i class="fab fa-whatsapp"></i> WhatsApp disponible</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="section-reviews" id="resenas">
+  <div class="section-tag reveal">Reseñas</div>
+  <h2 class="section-title reveal">Lo que dicen<br>nuestros <em>clientes</em></h2>
+  <div class="reviews-marquee-wrap">
+    <div class="reviews-track" id="reviewsTrack">
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Excelente servicio. El corte quedó perfecto y el ambiente es muy profesional. Definitivamente mi barbería de cabecera."</p><div class="review-author">Carlos M.</div><div class="review-date">Hace 2 semanas</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"La mejor experiencia que he tenido en una barbería. El barbero entendió exactamente lo que quería y superó mis expectativas."</p><div class="review-author">Andrés P.</div><div class="review-date">Hace 1 mes</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Reservar por la app es súper fácil. Llegué, no esperé nada y salí impecable. Muy recomendado para quien valora su tiempo."</p><div class="review-author">Santiago R.</div><div class="review-date">Hace 3 semanas</div></div>
+      <div class="review-card"><div class="review-stars">★★★★☆</div><p class="review-text">"Muy buenos barberos, el trato es excelente. Los precios son justos para la calidad del servicio que ofrecen."</p><div class="review-author">Felipe G.</div><div class="review-date">Hace 2 meses</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Llevo 2 años viniendo y nunca me han fallado. Ambiente relajado, barberos profesionales y el resultado siempre impecable."</p><div class="review-author">Diego L.</div><div class="review-date">Hace 1 semana</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"El combo premium vale cada peso. Salí con corte, barba y tratamiento y me sentí otra persona. Volveré seguro."</p><div class="review-author">Mauricio V.</div><div class="review-date">Hace 4 semanas</div></div>
+      <!-- Duplicado para loop continuo -->
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Excelente servicio. El corte quedó perfecto y el ambiente es muy profesional. Definitivamente mi barbería de cabecera."</p><div class="review-author">Carlos M.</div><div class="review-date">Hace 2 semanas</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"La mejor experiencia que he tenido en una barbería. El barbero entendió exactamente lo que quería y superó mis expectativas."</p><div class="review-author">Andrés P.</div><div class="review-date">Hace 1 mes</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Reservar por la app es súper fácil. Llegué, no esperé nada y salí impecable. Muy recomendado para quien valora su tiempo."</p><div class="review-author">Santiago R.</div><div class="review-date">Hace 3 semanas</div></div>
+      <div class="review-card"><div class="review-stars">★★★★☆</div><p class="review-text">"Muy buenos barberos, el trato es excelente. Los precios son justos para la calidad del servicio que ofrecen."</p><div class="review-author">Felipe G.</div><div class="review-date">Hace 2 meses</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"Llevo 2 años viniendo y nunca me han fallado. Ambiente relajado, barberos profesionales y el resultado siempre impecable."</p><div class="review-author">Diego L.</div><div class="review-date">Hace 1 semana</div></div>
+      <div class="review-card"><div class="review-stars">★★★★★</div><p class="review-text">"El combo premium vale cada peso. Salí con corte, barba y tratamiento y me sentí otra persona. Volveré seguro."</p><div class="review-author">Mauricio V.</div><div class="review-date">Hace 4 semanas</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO + MAPA -->
+<section class="section-contact" id="contacto">
+  <div class="section-tag reveal">Contacto</div>
+  <h2 class="section-title reveal">Hablemos <em>directamente</em></h2>
+  <p class="contact-intro-text reveal reveal-delay-1">¿Tienes una pregunta, un reclamo o una sugerencia para mejorar? Escríbenos o visítanos — estamos para escucharte.</p>
+
+  <div class="contact-grid">
+    <div class="contact-form-card card-neu reveal reveal-delay-1">
+      <h3 class="contact-form-title">Contáctanos o déjanos tu sugerencia</h3>
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="contactName" placeholder="Tu nombre completo">
+        <div class="field-error"></div>
+      </div>
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="contactEmail" placeholder="tucorreo@ejemplo.com">
+        <div class="field-error"></div>
+      </div>
+      <div class="field">
+        <label>Tipo de mensaje</label>
+        <select id="contactType">
+          <option value="Contacto general">Contacto general</option>
+          <option value="Sugerencia">Sugerencia</option>
+          <option value="Reclamo">Reclamo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Mensaje</label>
+        <textarea id="contactMessage" rows="4" placeholder="Cuéntanos en qué podemos ayudarte..."></textarea>
+        <div class="field-error"></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitContact()">Enviar mensaje</button>
+    </div>
+
+    <div class="contact-map-wrap reveal reveal-delay-2">
+      <div class="contact-map-embed">
+        <iframe src="https://www.google.com/maps?q=Calle+85+%2315-32,+Bogot%C3%A1,+Colombia&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ubicación de SGB en el mapa"></iframe>
+      </div>
+      <div class="contact-map-info neu-dark-raised">
+        <div class="contact-item"><i class="fas fa-map-marker-alt"></i> Calle 85 #15-32, Bogotá</div>
+        <div class="contact-item"><i class="fas fa-phone"></i> +57 300 123 4567</div>
+        <div class="contact-item"><i class="fas fa-envelope"></i> info@sgb.co</div>
+        <a class="contact-map-link" href="https://www.google.com/maps?q=Calle+85+%2315-32,+Bogot%C3%A1,+Colombia" target="_blank" rel="noopener">Ver en Google Maps <i class="fas fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="section-cta reveal">
+  <div class="cta-text">
+    <h2>¿Listo para tu próximo corte?</h2>
+    <p>Reserva en segundos. Sin filas. Sin esperas innecesarias.</p>
+  </div>
+  <button class="btn-cta-white" onclick="openModal()">Reservar mi cita ahora</button>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="nav-logo">S<span>GB</span></a>
+      <p>La barbería moderna que combina tradición artesanal con tecnología para darte la mejor experiencia.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navegación</h4>
+      <ul>
+        <li><a href="#servicios">Servicios</a></li>
+        <li><a href="#proceso">Cómo funciona</a></li>
+        <li><a href="#horarios">Horarios</a></li>
+        <li><a href="#resenas">Reseñas</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Acceso</h4>
+      <ul>
+        <li><a href="#" onclick="openModal()">Iniciar sesión</a></li>
+        <li><a href="register.html">Registrarse</a></li>
+        <li><a href="forgot-password.html">Recuperar contraseña</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 SGB — Sistema Gestión Barbería. Todos los derechos reservados.</span>
+    <span class="footer-tagline">"El estilo que mereces, el cuidado que necesitas"</span>
+  </div>
+</footer>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <div class="modal-top">
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+      <div class="modal-logo">S<span>GB</span></div>
+      <p>Accede a tu panel personalizado</p>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="loginEmail" placeholder="tucorreo@ejemplo.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="••••••">
+      </div>
+      <div class="field-error" id="loginError">Correo o contraseña incorrectos.</div>
+      <button class="btn btn-primary btn-block" onclick="handleLogin()">Entrar al sistema</button>
+      <div class="modal-footer-links">
+        <a href="forgot-password.html">¿Olvidaste tu contraseña?</a>
+        <a href="register.html">Crear cuenta</a>
+      </div>
+      <div class="demo-hints">
+        <p>Usuarios de prueba</p>
+        <div class="demo-hint-item" onclick="fillDemo('admin@demo.com','Demo1234')">
+          <i class="fas fa-crown" style="color:var(--blue);width:14px"></i> admin@demo.com <span>/ Demo1234</span>
+        </div>
+        <div class="demo-hint-item" onclick="fillDemo('barbero@demo.com','Demo1234')">
+          <i class="fas fa-cut" style="color:var(--blue);width:14px"></i> barbero@demo.com <span>/ Demo1234</span>
+        </div>
+        <div class="demo-hint-item" onclick="fillDemo('cliente@demo.com','Demo1234')">
+          <i class="fas fa-user" style="color:var(--blue);width:14px"></i> cliente@demo.com <span>/ Demo1234</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/api.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/reveal.js"></script>
+<script src="js/hero-carousel.js"></script>
+<script src="js/services-carousel.js"></script>
+<script src="js/login-modal.js"></script>
+<script src="js/contact.js"></script>
+</body>
+</html>

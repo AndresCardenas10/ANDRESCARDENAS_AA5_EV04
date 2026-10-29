@@ -1,0 +1,19 @@
+# Dependencias (se reinstalan con "npm install")
+node_modules/
+
+# Variables de entorno con datos locales/sensibles (NO subir al repositorio)
+.env
+
+# Comprobantes de pago subidos por los usuarios (datos personales)
+uploads/comprobantes/*
+!uploads/comprobantes/.gitkeep
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuracion del editor
+.vscode/
+
+# Registros
+*.log
