@@ -98,7 +98,7 @@ ANDRESCARDENAS_AA5_EV04/
 │   └── openapi.yaml              Especificación OpenAPI 3 (Swagger)
 ├── pruebas/
 │   ├── SGB_API_EV04.postman_collection.json                 Colección completa (81 peticiones)
-│   ├── SGB_API_EV04_Demostracion.postman_collection.json    18 pruebas para capturas y video
+│   ├── SGB_API_EV04_Demostracion.postman_collection.json    18 pruebas documentadas con capturas
 │   ├── SGB_Local.postman_environment.json                   Entorno de Postman (baseUrl)
 │   └── comprobante-prueba.png    Imagen para probar pagos por transferencia
 ├── public/                       Frontend del SGB conectado a la API
@@ -143,7 +143,7 @@ middlewares para autenticación, roles, validación y errores.
 | Archivo (carpeta `pruebas/`) | Contenido |
 |---|---|
 | `SGB_API_EV04.postman_collection.json` | **81 peticiones con 203 verificaciones** en 11 carpetas: casos exitosos, validaciones, permisos por rol, conflictos de agenda, pagos, inventario, notificaciones, reportes y errores generales |
-| `SGB_API_EV04_Demostracion.postman_collection.json` | **18 pruebas (P01–P18)**, dos por módulo, cada una con su descripción; se usan para las capturas y el video |
+| `SGB_API_EV04_Demostracion.postman_collection.json` | **18 pruebas (P01–P18)**, dos por módulo, cada una con su descripción; se usan para las capturas del documento de pruebas |
 | `SGB_Local.postman_environment.json` | Entorno **SGB - Local** con `baseUrl = http://localhost:3000` y las cuentas demo |
 
 ### Cómo ejecutarlas

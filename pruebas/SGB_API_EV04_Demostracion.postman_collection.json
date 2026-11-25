@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "SGB - API EV04 - Demostracion (18 pruebas)",
-    "description": "18 pruebas representativas (P01 a P18), dos por modulo, para las capturas y el video de la evidencia GA7-220501096-AA5-EV04. Ejecutar en orden: primero la carpeta 00 - Preparacion. Usa el entorno \"SGB - Local\" y requiere datos-demo.sql. Aprendiz: Andres Cardenas - Ficha 3186668.",
+    "description": "18 pruebas representativas (P01 a P18), dos por modulo, documentadas con capturas en la evidencia GA7-220501096-AA5-EV04. Ejecutar en orden: primero la carpeta 00 - Preparacion. Usa el entorno \"SGB - Local\" y requiere datos-demo.sql. Aprendiz: Andres Cardenas - Ficha 3186668.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
